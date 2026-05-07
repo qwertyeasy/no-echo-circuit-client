@@ -1,6 +1,5 @@
 package com.qwertyeasy.no_echo_circuit_client.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -10,12 +9,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+import com.qwertyeasy.no_echo_circuit_client.AppTypography
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
@@ -33,6 +27,13 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+private val DefaultAppTheme = darkColorScheme(
+    primary = LightGrey,
+    inversePrimary = BlackBack,
+    secondary = DarkPurple,
+    tertiary = NeonPurple
+)
+
 @Composable
 fun NoechocircuitclientTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -46,13 +47,13 @@ fun NoechocircuitclientTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
+        darkTheme -> DefaultAppTheme
         else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = AppTypography,
         content = content
     )
 }
