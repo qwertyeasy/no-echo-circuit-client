@@ -1,4 +1,4 @@
-package com.qwertyeasy.no_echo_circuit_client
+package com.qwertyeasy.no_echo_circuit_client.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.PlatformTextStyle
@@ -7,9 +7,14 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.qwertyeasy.no_echo_circuit_client.R
 
 val TronicaFont = FontFamily(
     Font(R.font.tronica)
+)
+
+val InterBlack = FontFamily(
+    Font(R.font.inter)
 )
 
 val AppTypography = Typography(

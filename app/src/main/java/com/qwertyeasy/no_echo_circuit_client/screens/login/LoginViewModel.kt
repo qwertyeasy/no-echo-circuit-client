@@ -1,6 +1,8 @@
-package com.qwertyeasy.no_echo_circuit_client
+package com.qwertyeasy.no_echo_circuit_client.screens.login
 
 import androidx.lifecycle.ViewModel
+import com.qwertyeasy.no_echo_circuit_client.data.MessageType
+import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -13,8 +15,9 @@ class LoginViewModel: ViewModel() {
         _nickname.value = changed
     }
 
-    fun onEnterClicked(){
-        // вход - попытка подключения через ws
-
+    fun onEnterClicked(rootViewModel: RootViewModel){
+        rootViewModel.sendMessage(
+            MessageType.AUTH, _nickname.value
+        )
     }
 }

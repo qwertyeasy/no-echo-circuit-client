@@ -1,4 +1,4 @@
-package com.qwertyeasy.no_echo_circuit_client
+package com.qwertyeasy.no_echo_circuit_client.screens.login
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString

@@ -1,0 +1,48 @@
+package com.qwertyeasy.no_echo_circuit_client.service
+
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+class NetworkService (private val appScope: CoroutineScope){
+
+    private val client = HttpClient(){
+        install(WebSockets)
+    }
+    private var session: DefaultClientWebSocketSession? = null
+
+    // сюда записывать список онлайна?
+    private val onlineList = mutableListOf<String>()
+
+    //может стоит все таки вынести адрес выше в RootViewModel?
+    private val serverUrl: String = "ws://10.0.2.2:8888/signal"
+
+    fun connect(){
+        appScope.launch {
+            client.webSocket(urlString = serverUrl) {
+                session = this
+                for (frame in incoming) {
+                    frame as? Frame.Text ?: continue
+                    handleServerMessage(frame.readText())
+                }
+            }
+        }
+    }
+
+    fun sendMessage(message: String){
+        appScope.launch {
+            if (session != null) {
+                session!!.outgoing.send(Frame.Text(message))
+            }
+        }
+    }
+
+    private fun handleServerMessage(message: String){
+        println(message)
+    }
+}
