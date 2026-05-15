@@ -1,4 +1,4 @@
-package com.qwertyeasy.no_echo_circuit_client.data
+package com.qwertyeasy.no_echo_circuit_client.screens.root
 
 object Screens {
     const val LOGIN = "login"

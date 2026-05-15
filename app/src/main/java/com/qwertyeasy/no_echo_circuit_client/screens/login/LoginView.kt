@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,30 +21,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qwertyeasy.no_echo_circuit_client.R
+import com.qwertyeasy.no_echo_circuit_client.components.TableTextField
 import com.qwertyeasy.no_echo_circuit_client.components.TitleButton
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
@@ -137,7 +127,6 @@ fun InnerTable(
     rootViewModel: RootViewModel, viewModel: LoginViewModel,
     modifier: Modifier, lineWidth: Dp, onLoginSuccess: () -> Unit
 ){
-
     Column (modifier = modifier){
         TableUpperRow(Modifier.weight(0.4f), lineWidth)
 
@@ -175,28 +164,12 @@ fun TableUpperRow(modifier: Modifier, lineWidth: Dp){
 
 @Composable
 fun NickInputBlock(viewModel: LoginViewModel, modifier: Modifier){
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
     val nickname by viewModel.nickname.collectAsState()
 
-    TextField(value = nickname, onValueChange = { viewModel.onNicknameChange(it) },
-        modifier = modifier.height(IntrinsicSize.Min),
-        singleLine = true,
-        colors = TextFieldDefaults.colors().copy(
-            focusedTextColor = NeonPurple,
-            focusedContainerColor = BlackBack,
-            unfocusedContainerColor = BlackBack
-        ),
-        visualTransformation = VisualTransformation { text ->
-            TransformedText(
-                AnnotatedString(text.text.uppercase()),
-                OffsetMapping.Identity
-            )
-        },
-    )
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboardController?.show()
+    Box(modifier = modifier) {
+        TableTextField(
+            nickname, BlackBack, NeonPurple,
+            { viewModel.onNicknameChange(it) }
+        )
     }
 }

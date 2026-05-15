@@ -1,5 +1,6 @@
 package com.qwertyeasy.no_echo_circuit_client.service
 
+import com.qwertyeasy.no_echo_circuit_client.data.ResponseMessage
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
@@ -7,7 +8,10 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 class NetworkService (private val appScope: CoroutineScope){
 
@@ -16,11 +20,15 @@ class NetworkService (private val appScope: CoroutineScope){
     }
     private var session: DefaultClientWebSocketSession? = null
 
-    // сюда записывать список онлайна?
-    private val onlineList = mutableListOf<String>()
-
     //может стоит все таки вынести адрес выше в RootViewModel?
     private val serverUrl: String = "ws://10.0.2.2:8888/signal"
+
+    private val _responses = MutableSharedFlow<ResponseMessage>()
+    val responses = _responses.asSharedFlow()
+
+    init {
+        connect()
+    }
 
     fun connect(){
         appScope.launch {
@@ -28,7 +36,9 @@ class NetworkService (private val appScope: CoroutineScope){
                 session = this
                 for (frame in incoming) {
                     frame as? Frame.Text ?: continue
-                    handleServerMessage(frame.readText())
+
+                    val response = Json.decodeFromString<ResponseMessage>(frame.readText())
+                    _responses.emit(response)
                 }
             }
         }
@@ -40,9 +50,5 @@ class NetworkService (private val appScope: CoroutineScope){
                 session!!.outgoing.send(Frame.Text(message))
             }
         }
-    }
-
-    private fun handleServerMessage(message: String){
-        println(message)
     }
 }
