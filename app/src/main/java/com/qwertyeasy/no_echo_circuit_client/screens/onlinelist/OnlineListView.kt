@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
+import com.qwertyeasy.no_echo_circuit_client.components.PreparedBorder
 import com.qwertyeasy.no_echo_circuit_client.components.TitleButton
 import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.popup.UserAddingPopup
@@ -72,7 +74,7 @@ fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel,
            BlackBack, NeonPurple, onAddButtonClick
         )
         LazyColumn(
-            Modifier.border(BorderStroke(width = 3.dp, color = NeonPurple), RectangleShape)
+            Modifier.border(PreparedBorder(NeonPurple), RectangleShape)
         ) {
             items(onlineList) { nickname ->
                 UserItem(nickname, rootViewModel)
@@ -85,22 +87,14 @@ fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel,
 fun UserItem(nickname: String, rootViewModel: RootViewModel){
     // функция для создания блока одного пользователя
     Column() {
-        Spacer(
-            Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .background(NeonPurple)
-        )
-        Box(
-            Modifier
-                .height(60.dp)
+        HorizontalLine(NeonPurple)
+        Box(Modifier.height(60.dp)
                 .fillMaxWidth()
                 .clickable(onClick = {
                     rootViewModel.sendMessage(
                         MessageType.CONNECT, nickname
                     )
-                }),
-            contentAlignment = Alignment.CenterStart
+                }), Alignment.CenterStart
         ) {
             Text(
                 text = nickname,

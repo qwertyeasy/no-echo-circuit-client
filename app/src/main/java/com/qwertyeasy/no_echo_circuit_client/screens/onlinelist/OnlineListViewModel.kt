@@ -15,7 +15,7 @@ class OnlineListViewModel: ViewModel() {
     val addNickname = _addNickname.asStateFlow()
 
     private val _addDescription = MutableStateFlow("")
-    val addDescription = _addNickname.asStateFlow()
+    val addDescription = _addDescription.asStateFlow()
 
     // TODO: нужно настроить DI через Hilt и внедрять networkService
     //  для отправки сообщения сканирования через networkService

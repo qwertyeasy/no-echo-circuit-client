@@ -16,31 +16,56 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
-fun TableTextField(nickname: String, containerColor: Color,
-                   textColor: Color, onValueChange: (String) -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-
-    TextField(
-        value = nickname,
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
-        onValueChange = onValueChange,
-        singleLine = true,
-        colors = TextFieldDefaults.colors().copy(
-            cursorColor = textColor,
-            focusedTextColor = textColor,
-            focusedContainerColor = containerColor,
-            unfocusedContainerColor = containerColor,
-            focusedIndicatorColor = Color.Transparent
-        ),
+fun TableTextField(string: String, containerColor: Color,
+               textColor: Color, onValueChange: (String) -> Unit
+){
+    CommonTextField(
+        string = string, containerColor = containerColor,
+        textColor = textColor, onValueChange = onValueChange,
+        isSingleLine = true,
         visualTransformation = VisualTransformation { text ->
             TransformedText(
                 AnnotatedString(text.text.uppercase()),
                 OffsetMapping.Identity
             )
         }
+    )
+}
+
+@Composable
+fun MultiLineTextField(string: String, containerColor: Color,
+              textColor: Color, onValueChange: (String) -> Unit
+){
+    CommonTextField(
+        string = string, containerColor = containerColor,
+        textColor = textColor, onValueChange = onValueChange,
+        isSingleLine = false,
+        visualTransformation = VisualTransformation.None
+    )
+}
+
+@Composable
+fun CommonTextField(string: String, containerColor: Color, isSingleLine: Boolean,
+                    visualTransformation: VisualTransformation, textColor: Color, onValueChange: (String) -> Unit
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    TextField(
+        value = string,
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
+        onValueChange = onValueChange,
+        singleLine = isSingleLine,
+        colors = TextFieldDefaults.colors().copy(
+            cursorColor = textColor,
+            focusedTextColor = textColor,
+            focusedContainerColor = containerColor,
+            unfocusedContainerColor = containerColor,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        visualTransformation = visualTransformation
     )
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()

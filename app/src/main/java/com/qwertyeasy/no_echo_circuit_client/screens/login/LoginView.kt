@@ -35,8 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qwertyeasy.no_echo_circuit_client.R
+import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
+import com.qwertyeasy.no_echo_circuit_client.components.PreparedBorder
 import com.qwertyeasy.no_echo_circuit_client.components.TableTextField
 import com.qwertyeasy.no_echo_circuit_client.components.TitleButton
+import com.qwertyeasy.no_echo_circuit_client.components.VerticalLine
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
@@ -93,44 +96,39 @@ fun BottomBlock(
     rootViewModel: RootViewModel, viewModel: LoginViewModel,
     modifier: Modifier, onLoginSuccess: () -> Unit
 ){
-    // централизованное управление весами блока ? надо??
-    val sideVertSpace = 0.06f
-    val vertInnerSpace = 0.85f
     Row(
-        modifier = modifier.fillMaxSize()
+        modifier.fillMaxSize()
             .background(BlackBack, shape = RoundedCornerShape(6))
     ) {
-        Spacer(modifier = Modifier.weight(sideVertSpace))
-        Column(modifier = Modifier.weight(vertInnerSpace)
+        Spacer(Modifier.weight(0.06f))
+        Column(Modifier.weight(0.85f)
         ) {
-            // внутренние элементы таблички,
-            // включая спейсеры сверху и снизу
-            Spacer(modifier = Modifier.weight(0.25f))
-            val lineWidth = 3.8.dp
+            Spacer(Modifier.weight(0.25f))
+
             InnerTable(rootViewModel, viewModel,
                 modifier = Modifier.weight(0.7f)
-                    .border(BorderStroke(color = NeonPurple, width = lineWidth)),
-                lineWidth, onLoginSuccess)
+                    .border(PreparedBorder(color = NeonPurple)),
+                onLoginSuccess)
             Column(modifier = Modifier.weight(0.12f),
                 verticalArrangement = Arrangement.Center
             ){
                 Text("VER.0.0.1", color = NeonPurple, fontSize = 22.sp)
             }
-            Spacer(modifier = Modifier.weight(0.2f))
+            Spacer(Modifier.weight(0.2f))
         }
-        Spacer(modifier = Modifier.weight(sideVertSpace))
+        Spacer(Modifier.weight(0.06f))
     }
 }
 
 @Composable
 fun InnerTable(
     rootViewModel: RootViewModel, viewModel: LoginViewModel,
-    modifier: Modifier, lineWidth: Dp, onLoginSuccess: () -> Unit
+    modifier: Modifier, onLoginSuccess: () -> Unit
 ){
     Column (modifier = modifier){
-        TableUpperRow(Modifier.weight(0.4f), lineWidth)
+        TableUpperRow(Modifier.weight(0.4f))
 
-        Spacer(Modifier.height(lineWidth).background(NeonPurple).fillMaxWidth())
+        HorizontalLine(NeonPurple)
 
         NickInputBlock(viewModel, Modifier.weight(0.2f).fillMaxWidth())
 
@@ -143,12 +141,14 @@ fun InnerTable(
 }
 
 @Composable
-fun TableUpperRow(modifier: Modifier, lineWidth: Dp){
+fun TableUpperRow(modifier: Modifier){
     Row (modifier = modifier){
         Box(modifier = Modifier.weight(0.62f).fillMaxSize(),
             contentAlignment = Alignment.Center
-        ) { Text("type the\nnickname", color = NeonPurple, fontSize = 30.sp) }
-        Spacer(Modifier.width(lineWidth).background(NeonPurple).fillMaxHeight())
+        ) {
+            Text("type the\nnickname", color = NeonPurple, fontSize = 30.sp)
+        }
+        VerticalLine(NeonPurple)
         Box(modifier = Modifier.weight(0.38f).fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
