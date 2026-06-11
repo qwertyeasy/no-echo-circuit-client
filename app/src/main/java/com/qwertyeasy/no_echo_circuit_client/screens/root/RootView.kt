@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.qwertyeasy.no_echo_circuit_client.components.DismissSpacer
 import com.qwertyeasy.no_echo_circuit_client.components.SmallPixelTextButton
+import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.login.LoginScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListScreen
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
@@ -55,9 +56,10 @@ fun RootView(){
             }
         }
 
+        //TODO: Вернуть начальное startDestination - LOGIN
         NavHost(
             navController = navController,
-            startDestination = Screens.LOGIN
+            startDestination = Screens.CHAT
         ) {
             composable(Screens.LOGIN) {
                 LoginScreen(rootViewModel, {
@@ -68,6 +70,9 @@ fun RootView(){
             }
             composable(Screens.ONLINE_LIST) {
                 OnlineListScreen(rootViewModel)
+            }
+            composable(Screens.CHAT){
+                ChatScreen()
             }
         }
     }
