@@ -30,6 +30,7 @@ ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version = "2.3.
 ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version = "2.3.9" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.6.3" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version = "2.7.7" }
+stream-webrtc = { group = "io.getstream", name = "stream-webrtc-android", version = "1.0.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

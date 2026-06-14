@@ -1,9 +1,8 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.onlinelist
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,9 +28,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
-import com.qwertyeasy.no_echo_circuit_client.components.PreparedBorder
+import com.qwertyeasy.no_echo_circuit_client.components.SmallPixelTextButton
 import com.qwertyeasy.no_echo_circuit_client.components.TitleButton
+import com.qwertyeasy.no_echo_circuit_client.components.prepareBorder
+import com.qwertyeasy.no_echo_circuit_client.components.threeSidedBorder
 import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.popup.UserAddingPopup
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
@@ -42,22 +43,32 @@ fun OnlineListScreen(rootViewModel: RootViewModel){
     val onlineViewModel: OnlineListViewModel = viewModel()
     val onlineList by rootViewModel.onlineList.collectAsState()
     var showPopup by remember { mutableStateOf(false) }
+    val closePopup by rootViewModel.closePopup.collectAsState()
 
-    if(showPopup) {
-        UserAddingPopup(onlineViewModel, rootViewModel, {
-            showPopup = false
-            onlineViewModel.onPopupDismiss()
-        })
+    val closePopupCall = {
+        showPopup = false
+        onlineViewModel.onPopupDismiss()
     }
-    Row(Modifier
-        .fillMaxSize()
-        .background(BlackBack, RectangleShape)) {
+    if(closePopup){
+        closePopupCall()
+        rootViewModel.onClosePopupReset()
+    }
+    if(showPopup) {
+        UserAddingPopup(onlineViewModel, rootViewModel, closePopupCall)
+    }
+    Row(
+        Modifier.fillMaxSize().background(BlackBack, RectangleShape)
+    ) {
         Spacer(Modifier.weight(0.06f))
         Column(Modifier.weight(0.85f)) {
             Spacer(Modifier.weight(0.2f))
-            InnerTable(Modifier.weight(0.8f).fillMaxHeight(),
-                rootViewModel, onlineList, {showPopup = true})
-            Box(modifier = Modifier.weight(0.07f), contentAlignment = Alignment.CenterStart){
+
+            InnerTable(Modifier.weight(0.8f).fillMaxHeight(), rootViewModel, onlineList
+            ) { showPopup = true }
+            Box(
+                modifier = Modifier.weight(0.07f),
+                contentAlignment = Alignment.CenterStart
+            ) {
                 Text("active: ${onlineList.size}", fontSize = 28.sp, color = NeonPurple)
             }
             Spacer(Modifier.weight(0.2f))
@@ -69,38 +80,68 @@ fun OnlineListScreen(rootViewModel: RootViewModel){
 @Composable
 fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel,
                onlineList: List<String>, onAddButtonClick: () -> Unit){
+    var editing by remember { mutableStateOf<String?>(null) }
+
     Column(modifier) {
-        TitleButton("+USER ", Modifier.height(100.dp),
+        TitleButton("+USER ", Modifier
+            .height(100.dp)
+            .border(prepareBorder(NeonPurple)),
            BlackBack, NeonPurple, onAddButtonClick
         )
-        LazyColumn(
-            Modifier.border(PreparedBorder(NeonPurple), RectangleShape)
+        PullToRefreshBox(
+            // TODO: isRefreshing нужен для защиты от повторных запросов, надо настроить
+            isRefreshing = false,
+            onRefresh = {
+                rootViewModel.onListRefresh()
+            },
+            modifier = Modifier.fillMaxSize()
         ) {
-            items(onlineList) { nickname ->
-                UserItem(nickname, rootViewModel)
+            LazyColumn(Modifier.fillMaxSize()
+            ) {
+                items(onlineList) { nickname ->
+                    UserItem(nickname, rootViewModel, editing == nickname){
+                        editing = it
+                    }
+                }
+                item { Spacer(Modifier) }
             }
         }
     }
 }
 
 @Composable
-fun UserItem(nickname: String, rootViewModel: RootViewModel){
-    // функция для создания блока одного пользователя
-    Column() {
-        HorizontalLine(NeonPurple)
-        Box(Modifier.height(60.dp)
-                .fillMaxWidth()
-                .clickable(onClick = {
-                    rootViewModel.sendMessage(
-                        MessageType.CONNECT, nickname
-                    )
-                }), Alignment.CenterStart
-        ) {
-            Text(
-                text = nickname,
-                color = NeonPurple,
-                modifier = Modifier.offset(15.dp)
-            )
+fun UserItem(nickname: String, rootViewModel: RootViewModel,
+             isEditing: Boolean, onEditChange: (String?) -> Unit
+){
+    Box(Modifier
+        .threeSidedBorder(NeonPurple)
+        .height(60.dp)
+        .fillMaxWidth()
+        .combinedClickable(
+            onClick = {
+                rootViewModel.onConnect(nickname)
+                if (isEditing) {
+                    onEditChange(null)
+                }
+            },
+            onLongClick = { onEditChange(nickname) }
+        ),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        if(isEditing) {
+            Row(Modifier.background(NeonPurple)) {
+                Box (Modifier.weight(0.7f), contentAlignment = Alignment.CenterStart){
+                    Text(nickname, Modifier.offset(15.dp), BlackBack)
+                }
+                SmallPixelTextButton("X", Modifier.weight(0.3f),
+                    BlackBack, NeonPurple
+                ){
+                    rootViewModel.sendMessage(MessageType.REMOVE, nickname)
+                    onEditChange(null)
+                }
+            }
+        } else {
+            Text(nickname, Modifier.offset(15.dp), NeonPurple)
         }
     }
 }

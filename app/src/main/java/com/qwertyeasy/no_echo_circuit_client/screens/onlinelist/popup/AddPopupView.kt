@@ -22,7 +22,7 @@ import com.qwertyeasy.no_echo_circuit_client.components.DismissSpacer
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
 import com.qwertyeasy.no_echo_circuit_client.components.MultiLineTextField
 import com.qwertyeasy.no_echo_circuit_client.components.PixelTextButton
-import com.qwertyeasy.no_echo_circuit_client.components.PreparedBorder
+import com.qwertyeasy.no_echo_circuit_client.components.prepareBorder
 import com.qwertyeasy.no_echo_circuit_client.components.TableTextField
 import com.qwertyeasy.no_echo_circuit_client.components.VerticalLine
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListViewModel
@@ -59,7 +59,7 @@ fun UserAddingPopup(onlineViewModel: OnlineListViewModel,
 @Composable
 fun PopupInnerTable(onlineViewModel: OnlineListViewModel, rootViewModel: RootViewModel, modifier: Modifier){
 
-    Column(modifier.border(PreparedBorder(BlackBack))
+    Column(modifier.border(prepareBorder(BlackBack))
     ) {
         PopupTableUpperRow(onlineViewModel, Modifier.weight(0.4f))
         HorizontalLine(BlackBack)

@@ -1,6 +1,5 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.login
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,13 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -30,13 +26,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qwertyeasy.no_echo_circuit_client.R
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
-import com.qwertyeasy.no_echo_circuit_client.components.PreparedBorder
+import com.qwertyeasy.no_echo_circuit_client.components.prepareBorder
 import com.qwertyeasy.no_echo_circuit_client.components.TableTextField
 import com.qwertyeasy.no_echo_circuit_client.components.TitleButton
 import com.qwertyeasy.no_echo_circuit_client.components.VerticalLine
@@ -85,7 +80,8 @@ fun UpperBlock(modifier: Modifier, padding: PaddingValues){
                     color = BlackBack.copy(alpha = 0.7f),
                     offset = Offset(0f, 8f),
                     blurRadius = 10f
-                )
+                ),
+                color = BlackBack
             )
         )
     }
@@ -97,7 +93,8 @@ fun BottomBlock(
     modifier: Modifier, onLoginSuccess: () -> Unit
 ){
     Row(
-        modifier.fillMaxSize()
+        modifier
+            .fillMaxSize()
             .background(BlackBack, shape = RoundedCornerShape(6))
     ) {
         Spacer(Modifier.weight(0.06f))
@@ -106,8 +103,9 @@ fun BottomBlock(
             Spacer(Modifier.weight(0.25f))
 
             InnerTable(rootViewModel, viewModel,
-                modifier = Modifier.weight(0.7f)
-                    .border(PreparedBorder(color = NeonPurple)),
+                modifier = Modifier
+                    .weight(0.7f)
+                    .border(prepareBorder(color = NeonPurple)),
                 onLoginSuccess)
             Column(modifier = Modifier.weight(0.12f),
                 verticalArrangement = Arrangement.Center
@@ -130,7 +128,9 @@ fun InnerTable(
 
         HorizontalLine(NeonPurple)
 
-        NickInputBlock(viewModel, Modifier.weight(0.2f).fillMaxWidth())
+        NickInputBlock(viewModel, Modifier
+            .weight(0.2f)
+            .fillMaxWidth())
 
         TitleButton("ENTER→", Modifier.weight(0.4f), BlackBack,
             NeonPurple, {
@@ -143,13 +143,17 @@ fun InnerTable(
 @Composable
 fun TableUpperRow(modifier: Modifier){
     Row (modifier = modifier){
-        Box(modifier = Modifier.weight(0.62f).fillMaxSize(),
+        Box(modifier = Modifier
+            .weight(0.62f)
+            .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text("type the\nnickname", color = NeonPurple, fontSize = 30.sp)
         }
         VerticalLine(NeonPurple)
-        Box(modifier = Modifier.weight(0.38f).fillMaxSize(),
+        Box(modifier = Modifier
+            .weight(0.38f)
+            .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Image(
