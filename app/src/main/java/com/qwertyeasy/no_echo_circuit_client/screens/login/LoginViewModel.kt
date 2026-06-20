@@ -19,5 +19,6 @@ class LoginViewModel: ViewModel() {
         rootViewModel.sendMessage(
             MessageType.AUTH, _nickname.value
         )
+        rootViewModel.setMyName(_nickname.value)
     }
 }

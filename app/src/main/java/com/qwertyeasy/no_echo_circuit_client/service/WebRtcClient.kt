@@ -1,7 +1,6 @@
 package com.qwertyeasy.no_echo_circuit_client.service
 
 import android.content.Context
-import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidatePack
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.ConnectionObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.DataChannelObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.RtcSdpObserver
@@ -22,9 +21,9 @@ class WebRtcClient private constructor() {
         val instance by lazy { WebRtcClient() }
     }
 
-    fun addIceCandidate(candidate: IceCandidatePack){
-        val pc = peerConnectionMapByUser[candidate.from]
-        pc?.addIceCandidate(candidate.ice)
+    fun addIceCandidate(username: String, iceCandidate: IceCandidate){
+        val pc = peerConnectionMapByUser[username]
+        pc?.addIceCandidate(iceCandidate)
     }
 
     fun createConnectionFactory(context: Context){
@@ -40,6 +39,15 @@ class WebRtcClient private constructor() {
         factory = PeerConnectionFactory.builder()
             .setOptions(options)
             .createPeerConnectionFactory()
+    }
+
+    fun setRemoteSdpByNickname(
+        remoteNick: String, sdp: SessionDescription
+    ){
+        val pc = peerConnectionMapByUser[remoteNick]
+        pc?.setRemoteDescription(
+            object : RtcSdpObserver() {}, sdp
+        )
     }
 
     fun getIceServers(): List<PeerConnection.IceServer>{
@@ -63,6 +71,9 @@ class WebRtcClient private constructor() {
             iceTransportsType = PeerConnection.IceTransportsType.ALL
         }
         val observer = object : ConnectionObserver() {
+            override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
+                println("Статус IceConnection изменился: $p0")
+            }
             override fun onIceCandidate(candidate: IceCandidate?) {
                 candidate?.let{ onIceCands(candidate) }
             }
@@ -121,7 +132,10 @@ class WebRtcClient private constructor() {
             }
 
             override fun onStateChange() {
-                super.onStateChange()
+                println("Состояние DataChannel изменилось, текущее: ${dataChannel.state()}")
+                if(dataChannel.state() == DataChannel.State.OPEN){
+                    println("Соединение установлено и готово к отправке сообщений")
+                }
             }
         })
     }

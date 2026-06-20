@@ -4,10 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qwertyeasy.no_echo_circuit_client.data.NotificationData
 import com.qwertyeasy.no_echo_circuit_client.data.SocketMessage
-import com.qwertyeasy.no_echo_circuit_client.data.connectdto.AnswerRequest
-import com.qwertyeasy.no_echo_circuit_client.data.connectdto.AnswerResponse
-import com.qwertyeasy.no_echo_circuit_client.data.connectdto.ConnectRequest
-import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidatePack
+import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateDto
+import com.qwertyeasy.no_echo_circuit_client.data.connectdto.SdpMessage
+import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateMessage
 import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.data.enums.ResponseType
 import com.qwertyeasy.no_echo_circuit_client.service.NetworkService
@@ -19,6 +18,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.webrtc.IceCandidate
+import org.webrtc.SessionDescription
 import java.util.ArrayDeque
 import java.util.Queue
 
@@ -26,6 +27,7 @@ class RootViewModel: ViewModel() {
 
     private val networkService = NetworkService(viewModelScope)
     private val webRtcClient = WebRtcClient.instance
+    private var myName: String? = null
 
     init {
         handleServerMessage()
@@ -51,47 +53,58 @@ class RootViewModel: ViewModel() {
         checkNextNotification()
     }
 
+    fun setMyName(name: String){
+        myName = name
+    }
+
     // 1 шаг - отправка запроса
     fun onConnect(nickname: String){
         println("Отправление запроса к пользователю $nickname")
 
-        //TODO: Нужно как-то вынести сюда сохранение своего же имени,
-        // чтобы можно было легко указывать его в сообщениях
-
         val pc = webRtcClient.createPeerConnection(nickname){
             sendMessage(MessageType.ICE, Json.encodeToString(
-                IceCandidatePack("me", nickname, it)
+                IceCandidateMessage(
+                    myName!!, nickname, IceCandidateDto(
+                        it.sdpMid, it.sdpMLineIndex, it.sdp
+                    )
+                )
             ))
         }!!
-        webRtcClient.createDataChannel(pc)
-
         webRtcClient.createSdpForConnection(peerConnection = pc, isOfferSdp = true){
             sendMessage(MessageType.CONNECT, Json.encodeToString(
-                ConnectRequest(nickname, it)
+                SdpMessage(myName!!, nickname, it.description)
             ))
         }
     }
 
     // 3 шаг - получение запроса с оффером, создание ответа и отправка
     fun onAnswerRequest(request: String){
-        val answerRequest = Json.decodeFromString<AnswerRequest>(request)
+        val answerRequest = Json.decodeFromString<SdpMessage>(request)
+        val requestSdp = SessionDescription(
+            SessionDescription.Type.OFFER, answerRequest.sdp
+        )
+
         println("Получен запрос о соединении от пользователя ${answerRequest.from}: " +
-                "прислали ${answerRequest.offer}")
+                "прислали $requestSdp")
 
         val pc = webRtcClient.createPeerConnection(answerRequest.from){
             sendMessage(MessageType.ICE, Json.encodeToString(
-                IceCandidatePack("me", answerRequest.from, it)
+                IceCandidateMessage(
+                    myName!!, answerRequest.from, IceCandidateDto(
+                        it.sdpMid, it.sdpMLineIndex, it.sdp
+                    )
+                )
             ))
         }
         pc?.setRemoteDescription(
-            object : RtcSdpObserver() {}, answerRequest.offer
+            object : RtcSdpObserver() {}, requestSdp
         )
         webRtcClient.createSdpForConnection(peerConnection = pc!!, isOfferSdp = false){
             sendMessage(MessageType.ANSWER, Json.encodeToString(
-                AnswerResponse(
-                    from = "me",
+                SdpMessage(
+                    from = myName!!,
                     to = answerRequest.from,
-                    answer = it
+                    sdp = it.description
                 )
             ))
         }
@@ -99,9 +112,13 @@ class RootViewModel: ViewModel() {
 
     // 5 шаг - получение ответа, готов к подключению
     fun onAnswerResponse(response: String){
-        //TODO: данные получены, подключаемся напрямую
-        val response = Json.decodeFromString<AnswerResponse>(response)
-        println("Получен ответ от пользователя ${response.from}: ${response.answer}")
+        val sdpMessage = Json.decodeFromString<SdpMessage>(response)
+        val responseSdp = SessionDescription(
+            SessionDescription.Type.ANSWER, sdpMessage.sdp
+        )
+        println("Получен ответ от пользователя ${sdpMessage.from}: $responseSdp")
+
+        webRtcClient.setRemoteSdpByNickname(sdpMessage.from, responseSdp)
     }
 
     fun onListRefresh(){
@@ -144,10 +161,13 @@ class RootViewModel: ViewModel() {
     }
 
     fun onIceReceived(payload: String){
-        val candidate = Json.decodeFromString<IceCandidatePack>(payload)
-        println("Получен айс-кандидат от пользователя ${candidate.from}")
+        val msg = Json.decodeFromString<IceCandidateMessage>(payload)
+        println("Получен айс-кандидат от пользователя ${msg.from}")
 
-        webRtcClient.addIceCandidate(candidate)
+        val iceCandidate = IceCandidate(
+            msg.ice.sdpMid, msg.ice.sdpMLineIndex, msg.ice.candidate
+        )
+        webRtcClient.addIceCandidate(msg.from, iceCandidate)
     }
 
     private fun handleServerMessage(){

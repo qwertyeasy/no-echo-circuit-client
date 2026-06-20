@@ -25,9 +25,9 @@ class NetworkService (private val appScope: CoroutineScope){
 
     //может стоит все таки вынести адрес выше в RootViewModel?
 //    private val serverUrl: String = "ws://10.0.2.2:8888/signal"
-//    private val serverUrl: String = "ws://192.168.1.131:8888/signal"
-    private val serveoTunnel = "referre.serveousercontent.com"
-    private val serverUrl: String = "wss://$serveoTunnel/signal"
+    private val serverUrl: String = "ws://192.168.1.109:8888/signal"
+//    private val serveoTunnel = "possimus.serveousercontent.com"
+//    private val serverUrl: String = "wss://$serveoTunnel/signal"
     private val _responses = MutableSharedFlow<ResponseMessage>()
     val responses = _responses.asSharedFlow()
 

@@ -8,8 +8,8 @@ import org.webrtc.PeerConnection
 open class ConnectionObserver : PeerConnection.Observer{
     override fun onIceCandidate(candidate: IceCandidate?) {}
     override fun onDataChannel(channel: DataChannel?) {}
-    override fun onSignalingChange(p0: PeerConnection.SignalingState?) {}
     override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {}
+    override fun onSignalingChange(p0: PeerConnection.SignalingState?) {}
     override fun onIceConnectionReceivingChange(p0: Boolean) {}
     override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {}
     override fun onIceCandidatesRemoved(p0: Array<out IceCandidate?>?) {}
