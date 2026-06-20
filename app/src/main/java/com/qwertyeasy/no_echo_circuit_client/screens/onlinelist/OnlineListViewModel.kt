@@ -45,7 +45,8 @@ class OnlineListViewModel: ViewModel() {
     fun onAddEnterClicked(rootViewModel: RootViewModel){
         val notifyDataJson = Json.encodeToString(
             NotificationData(
-                _addNickname.value, _addDescription.value
+                _addNickname.value,
+                _addDescription.value.takeIf { it.isNotBlank() }
             ))
         rootViewModel.sendMessage(
             MessageType.ADD, notifyDataJson

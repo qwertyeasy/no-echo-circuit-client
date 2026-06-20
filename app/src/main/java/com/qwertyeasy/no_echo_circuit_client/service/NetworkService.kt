@@ -8,10 +8,13 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.net.ConnectException
 
 class NetworkService (private val appScope: CoroutineScope){
 
@@ -21,8 +24,10 @@ class NetworkService (private val appScope: CoroutineScope){
     private var session: DefaultClientWebSocketSession? = null
 
     //может стоит все таки вынести адрес выше в RootViewModel?
-    private val serverUrl: String = "ws://10.0.2.2:8888/signal"
-
+//    private val serverUrl: String = "ws://10.0.2.2:8888/signal"
+    private val serverUrl: String = "ws://192.168.1.109:8888/signal"
+//    private val serveoTunnel = "possimus.serveousercontent.com"
+//    private val serverUrl: String = "wss://$serveoTunnel/signal"
     private val _responses = MutableSharedFlow<ResponseMessage>()
     val responses = _responses.asSharedFlow()
 
@@ -32,13 +37,23 @@ class NetworkService (private val appScope: CoroutineScope){
 
     fun connect(){
         appScope.launch {
-            client.webSocket(urlString = serverUrl) {
-                session = this
-                for (frame in incoming) {
-                    frame as? Frame.Text ?: continue
+            while (isActive) {
+                try {
+                    client.webSocket(urlString = serverUrl) {
+                        session = this
+                        for (frame in incoming) {
+                            frame as? Frame.Text ?: continue
 
-                    val response = Json.decodeFromString<ResponseMessage>(frame.readText())
-                    _responses.emit(response)
+                            val response = Json.decodeFromString<ResponseMessage>(frame.readText())
+                            _responses.emit(response)
+                        }
+                    }
+                } catch (_: ConnectException) {
+                    //TODO: Настроить отображение ошибки подключения
+
+                    println("Ошибка подключения к серверу")
+                    delay(5000)
+                    println("Ретрай подключения к серверу")
                 }
             }
         }

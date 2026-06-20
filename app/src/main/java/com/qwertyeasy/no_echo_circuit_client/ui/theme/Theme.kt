@@ -40,18 +40,18 @@ fun NoechocircuitclientTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DefaultAppTheme
-        else -> LightColorScheme
-    }
+//    val colorScheme = when {
+//        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+//            val context = LocalContext.current
+//            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+//        }
+//
+//        darkTheme -> DefaultAppTheme
+//        else -> LightColorScheme
+//    }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = DefaultAppTheme,
         typography = AppTypography,
         content = content
     )
