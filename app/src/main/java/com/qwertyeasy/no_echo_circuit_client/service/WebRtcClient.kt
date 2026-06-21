@@ -1,6 +1,8 @@
 package com.qwertyeasy.no_echo_circuit_client.service
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.ConnectionObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.DataChannelObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.RtcSdpObserver
@@ -59,8 +61,15 @@ class WebRtcClient private constructor() {
         )
     }
 
+    fun connectionResourceDisposal(nickname: String){
+        println("Соединение закрыто, очистка ресурсов")
+        dataChannelMapByUser.remove(nickname)
+        peerConnectionMapByUser.remove(nickname)
+    }
+
     fun createPeerConnection(
-        nickname: String, onIceCands: (IceCandidate) -> Unit
+        nickname: String, onSuccessConnect: (String) -> Unit,
+        onConnectionClosed: (String) -> Unit, onIceCands: (IceCandidate) -> Unit
     ): PeerConnection? {
         val peerFactory = factory ?: throw IllegalStateException("Not initialized")
         val iceServers = getIceServers()
@@ -73,6 +82,13 @@ class WebRtcClient private constructor() {
         val observer = object : ConnectionObserver() {
             override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
                 println("Статус IceConnection изменился: $p0")
+                if(p0 == PeerConnection.IceConnectionState.DISCONNECTED ||
+                   p0 == PeerConnection.IceConnectionState.CLOSED ||
+                   p0 == PeerConnection.IceConnectionState.FAILED
+                ){
+                    connectionResourceDisposal(nickname)
+                    onConnectionClosed(nickname)
+                }
             }
             override fun onIceCandidate(candidate: IceCandidate?) {
                 candidate?.let{ onIceCands(candidate) }
@@ -85,7 +101,7 @@ class WebRtcClient private constructor() {
         val peerConnection = peerFactory.createPeerConnection(rtcConfig, observer)
         peerConnection?.let {
             peerConnectionMapByUser[nickname] = peerConnection
-            val dataChannel = createDataChannel(it)
+            val dataChannel = createDataChannel(nickname, it, onSuccessConnect)
             dataChannel?.let { ch -> dataChannelMapByUser.put(nickname, ch) }
         }
         return peerConnection
@@ -113,19 +129,22 @@ class WebRtcClient private constructor() {
     }
 
     fun createDataChannel(
-        peerConnection: PeerConnection, label: String = "channel"
+        nickname: String, peerConnection: PeerConnection,
+        onSuccessConnect: (String) -> Unit, label: String = "channel"
     ): DataChannel? {
         val init = DataChannel.Init().apply {
             ordered = true
             maxRetransmitTimeMs = -1
         }
         val dc = peerConnection.createDataChannel(label, init)
-        setupDataChannelsObserver(dc)
+        setupDataChannelsObserver(nickname, dc, onSuccessConnect)
         return dc
     }
 
     //TODO: Реализовать методы
-    fun setupDataChannelsObserver(dataChannel: DataChannel){
+    fun setupDataChannelsObserver(
+        nickname: String, dataChannel: DataChannel, onSuccessConnect: (String) -> Unit
+    ){
         dataChannel.registerObserver(object: DataChannelObserver(){
             override fun onMessage(p0: DataChannel.Buffer?) {
                 super.onMessage(p0)
@@ -135,6 +154,9 @@ class WebRtcClient private constructor() {
                 println("Состояние DataChannel изменилось, текущее: ${dataChannel.state()}")
                 if(dataChannel.state() == DataChannel.State.OPEN){
                     println("Соединение установлено и готово к отправке сообщений")
+                    Handler(Looper.getMainLooper()).post {
+                        onSuccessConnect(nickname)
+                    }
                 }
             }
         })

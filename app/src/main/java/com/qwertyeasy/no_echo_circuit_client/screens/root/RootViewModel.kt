@@ -22,6 +22,7 @@ import org.webrtc.IceCandidate
 import org.webrtc.SessionDescription
 import java.util.ArrayDeque
 import java.util.Queue
+import kotlin.collections.emptySet
 
 class RootViewModel: ViewModel() {
 
@@ -46,6 +47,9 @@ class RootViewModel: ViewModel() {
     private val _currentNotification = MutableStateFlow<NotificationData?>(null)
     val currentNotification = _currentNotification.asStateFlow()
 
+    private val _connectedUsers = MutableStateFlow<Set<String>>(emptySet())
+    val connectedUsers = _connectedUsers.asStateFlow()
+
     fun onAddButtonClicked(){
         sendMessage(MessageType.ADD, Json.encodeToString(
             NotificationData(_currentNotification.value!!.userNickname))
@@ -57,11 +61,35 @@ class RootViewModel: ViewModel() {
         myName = name
     }
 
-    // 1 шаг - отправка запроса
-    fun onConnect(nickname: String){
-        println("Отправление запроса к пользователю $nickname")
+    fun addConnectionView(nickname: String){
+        _connectedUsers.value += nickname
+        println("Добавляю $nickname в список, текущее количество - ${_connectedUsers.value.size}")
+    }
 
-        val pc = webRtcClient.createPeerConnection(nickname){
+    fun removeConnectionView(nickname: String){
+        _connectedUsers.value -= nickname
+        println("Убираю $nickname из списка, текущее количество - ${_connectedUsers.value.size}")
+    }
+
+    fun isUserConnected(nickname: String): Boolean {
+        return _connectedUsers.value.contains(nickname)
+    }
+
+    fun onConnect(nickname: String, onSuccessConnect: (String) -> Unit){
+        println("Отправление запроса к пользователю $nickname")
+        if(isUserConnected(nickname)){
+            println("Пользователь уже был подключён. Запрос будет проигнорирован")
+            onSuccessConnect(nickname)
+            return
+        }
+        val onSuccessConnectAndForward: (String) -> Unit = {
+            addConnectionView(it)
+            onSuccessConnect(it)
+        }
+        val pc = webRtcClient.createPeerConnection(
+            nickname, onSuccessConnectAndForward,
+            { removeConnectionView(it) }
+        ){
             sendMessage(MessageType.ICE, Json.encodeToString(
                 IceCandidateMessage(
                     myName!!, nickname, IceCandidateDto(
@@ -77,7 +105,6 @@ class RootViewModel: ViewModel() {
         }
     }
 
-    // 3 шаг - получение запроса с оффером, создание ответа и отправка
     fun onAnswerRequest(request: String){
         val answerRequest = Json.decodeFromString<SdpMessage>(request)
         val requestSdp = SessionDescription(
@@ -87,7 +114,10 @@ class RootViewModel: ViewModel() {
         println("Получен запрос о соединении от пользователя ${answerRequest.from}: " +
                 "прислали $requestSdp")
 
-        val pc = webRtcClient.createPeerConnection(answerRequest.from){
+        val pc = webRtcClient.createPeerConnection(answerRequest.from,
+            { addConnectionView(it) },
+            { removeConnectionView(it) }
+        ){
             sendMessage(MessageType.ICE, Json.encodeToString(
                 IceCandidateMessage(
                     myName!!, answerRequest.from, IceCandidateDto(
@@ -110,7 +140,6 @@ class RootViewModel: ViewModel() {
         }
     }
 
-    // 5 шаг - получение ответа, готов к подключению
     fun onAnswerResponse(response: String){
         val sdpMessage = Json.decodeFromString<SdpMessage>(response)
         val responseSdp = SessionDescription(

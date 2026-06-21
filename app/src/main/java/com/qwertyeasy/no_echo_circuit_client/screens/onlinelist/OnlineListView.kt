@@ -36,10 +36,13 @@ import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.popup.UserAddingPopup
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
+import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 
 @Composable
-fun OnlineListScreen(rootViewModel: RootViewModel){
+fun OnlineListScreen(
+    rootViewModel: RootViewModel, onSuccessConnect: (String) -> Unit
+){
     val onlineViewModel: OnlineListViewModel = viewModel()
     val onlineList by rootViewModel.onlineList.collectAsState()
     var showPopup by remember { mutableStateOf(false) }
@@ -63,7 +66,8 @@ fun OnlineListScreen(rootViewModel: RootViewModel){
         Column(Modifier.weight(0.85f)) {
             Spacer(Modifier.weight(0.2f))
 
-            InnerTable(Modifier.weight(0.8f).fillMaxHeight(), rootViewModel, onlineList
+            InnerTable(Modifier.weight(0.8f).fillMaxHeight(),
+                rootViewModel, onlineList, onSuccessConnect
             ) { showPopup = true }
             Box(
                 modifier = Modifier.weight(0.07f),
@@ -78,8 +82,8 @@ fun OnlineListScreen(rootViewModel: RootViewModel){
 }
 
 @Composable
-fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel,
-               onlineList: List<String>, onAddButtonClick: () -> Unit){
+fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel, onlineList: List<String>,
+               onSuccessConnect: (String) -> Unit, onAddButtonClick: () -> Unit){
     var editing by remember { mutableStateOf<String?>(null) }
 
     Column(modifier) {
@@ -99,7 +103,9 @@ fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel,
             LazyColumn(Modifier.fillMaxSize()
             ) {
                 items(onlineList) { nickname ->
-                    UserItem(nickname, rootViewModel, editing == nickname){
+                    UserItem(nickname, rootViewModel,
+                        editing == nickname, onSuccessConnect
+                    ){
                         editing = it
                     }
                 }
@@ -111,15 +117,19 @@ fun InnerTable(modifier: Modifier, rootViewModel: RootViewModel,
 
 @Composable
 fun UserItem(nickname: String, rootViewModel: RootViewModel,
-             isEditing: Boolean, onEditChange: (String?) -> Unit
+             isEditing: Boolean, onSuccessConnect: (String) -> Unit, onEditChange: (String?) -> Unit
 ){
-    Box(Modifier
-        .threeSidedBorder(NeonPurple)
+    val connectedUsers by rootViewModel.connectedUsers.collectAsState()
+    val isConnected = connectedUsers.contains(nickname)
+    val modifier = if(isConnected) Modifier.background(LightGrey)
+                    else Modifier.threeSidedBorder(NeonPurple)
+
+    Box(modifier
         .height(60.dp)
         .fillMaxWidth()
         .combinedClickable(
             onClick = {
-                rootViewModel.onConnect(nickname)
+                rootViewModel.onConnect(nickname, onSuccessConnect)
                 if (isEditing) {
                     onEditChange(null)
                 }
@@ -141,7 +151,8 @@ fun UserItem(nickname: String, rootViewModel: RootViewModel,
                 }
             }
         } else {
-            Text(nickname, Modifier.offset(15.dp), NeonPurple)
+            Text(nickname, Modifier.offset(15.dp),
+                if(isConnected) BlackBack else NeonPurple)
         }
     }
 }
