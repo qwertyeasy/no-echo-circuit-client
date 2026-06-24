@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatScreen
+import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.screens.login.LoginScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.root.popup.NotificationPopup
@@ -19,6 +20,8 @@ import com.qwertyeasy.no_echo_circuit_client.screens.root.popup.NotificationPopu
 fun RootView(){
     val navController = rememberNavController()
     val rootViewModel: RootViewModel = viewModel()
+    val chatViewModel: ChatViewModel = viewModel()
+    rootViewModel.setChatViewModel(chatViewModel)
 
     val currentNotification by rootViewModel.currentNotification.collectAsState()
 
@@ -46,7 +49,7 @@ fun RootView(){
                 }
             }
             composable(Screens.CHAT){
-                ChatScreen()
+                ChatScreen(chatViewModel, rootViewModel)
             }
         }
     }

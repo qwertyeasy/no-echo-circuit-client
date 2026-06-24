@@ -25,35 +25,40 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qwertyeasy.no_echo_circuit_client.R
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
 import com.qwertyeasy.no_echo_circuit_client.components.MultiLineTextField
-import com.qwertyeasy.no_echo_circuit_client.data.ChatMessage
 import com.qwertyeasy.no_echo_circuit_client.data.MessageData
 import com.qwertyeasy.no_echo_circuit_client.data.TextMessage
+import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 
 @Composable
-fun ChatScreen(){
+fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
     Box(modifier = Modifier.fillMaxSize().background(BlackBack),
         contentAlignment = Alignment.TopStart
     ) {
-        Text(".".repeat(1300), color = LightGrey.copy(alpha = 0.2f), fontSize = 22.sp)
+        ChatBackground()
         Column() {
             Spacer(Modifier.weight(0.1f))
-            ChatBlock(Modifier.weight(0.9f))
-            BottomInputField(Modifier.weight(0.08f))
+            ChatBlock(Modifier.weight(0.9f), chatViewModel, rootViewModel)
+            BottomInputField(Modifier.weight(0.08f), chatViewModel, rootViewModel)
             Spacer(Modifier.weight(0.03f))
         }
     }
 }
 
 @Composable
-fun BottomInputField(modifier: Modifier){
-    val chatViewModel: ChatViewModel = viewModel()
+fun ChatBackground(){
+    Text(".".repeat(1300), color = LightGrey.copy(alpha = 0.2f), fontSize = 22.sp)
+}
+
+@Composable
+fun BottomInputField(
+    modifier: Modifier, chatViewModel: ChatViewModel, rootViewModel: RootViewModel
+){
     val messageInput by chatViewModel.messageInput.collectAsState()
 
     Column(modifier = modifier) {
@@ -67,7 +72,7 @@ fun BottomInputField(modifier: Modifier){
                     { chatViewModel.onMessageChanged(it) })
             }
             SquareButton(Modifier.weight(0.12f), R.drawable.arrow,
-                { chatViewModel.onSendClicked() },
+                { chatViewModel.onSendClicked(rootViewModel) },
                 { chatViewModel.onSendPressed() })
         }
     }
@@ -93,31 +98,12 @@ fun SquareButton(modifier: Modifier, iconId: Int,
 }
 
 @Composable
-fun ChatBlock(modifier: Modifier){
-    val m1 = ChatMessage("1p", "2p", TextMessage("Привет"))
-    val m2 = ChatMessage("2p", "1p", TextMessage("Здарова, индюк набитый"))
-    val messageList = listOf(
-        m1.copy(), m2.copy(),
-        m1.copy(data = TextMessage("Как дела?")),
-        m2.copy(data = TextMessage("Да ничего, нормик")),
-        m1.copy(data = TextMessage("Ладно, пока. Хотя нет. Знаешь, о чем я думаю? Да о том, как хочу ударить тебя. А потом выпить лимонаду")),
-        m2.copy(data = TextMessage("Эээээ. А ты не прихуел случаем. В заинске за такой базар...")),
-        m1.copy(data = TextMessage("Да пошёл ты! Ладно, ты дурик, я вижу это. Все окей. Иди по братски")),
-        m2.copy(data = TextMessage("А чууу? Ты че, обоссался что-ли?")),
-        m1.copy(data = TextMessage("Нет конечно. Братулёк. Ладо, проехали")),
-        m2.copy(data = TextMessage("Ну ты и фрик")),
-        m1.copy(data = TextMessage("А я не понялааа")),
-        m2.copy(data = TextMessage("А я не понялааа")),
-        m1.copy(data = TextMessage("Ну ты не надо даа")),
-        m2.copy(data = TextMessage("А че ты мне сделаешь")),
-        m1.copy(data = TextMessage("Приеду отпинаю")),
-        m2.copy(data = TextMessage("Нет, это я приеду отпинаю")),
-        m1.copy(data = TextMessage("Это ты получишь! Понял? От меня! Я тебя так нахлобучу.")),
-        )
-    val myName = "1p"
+fun ChatBlock(modifier: Modifier, chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
+    val chatList by chatViewModel.getCurrentChat().collectAsState()
+    val myName = rootViewModel.getMyName()
 
-    LazyColumn(modifier = modifier) {
-        items(messageList){ item ->
+    LazyColumn(modifier = modifier, reverseLayout = true) {
+        items(chatList.reversed()){ item ->
 
             val isMain = item.from == myName
             val alignment = if(isMain) Alignment.CenterEnd else Alignment.CenterStart
