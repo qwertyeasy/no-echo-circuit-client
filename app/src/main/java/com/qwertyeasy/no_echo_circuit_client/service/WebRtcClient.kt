@@ -3,15 +3,18 @@ package com.qwertyeasy.no_echo_circuit_client.service
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.qwertyeasy.no_echo_circuit_client.data.ChatMessage
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.ConnectionObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.DataChannelObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.RtcSdpObserver
+import kotlinx.serialization.json.Json
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.SessionDescription
+import java.nio.ByteBuffer
 
 class WebRtcClient private constructor() {
 
@@ -26,6 +29,18 @@ class WebRtcClient private constructor() {
     fun addIceCandidate(username: String, iceCandidate: IceCandidate){
         val pc = peerConnectionMapByUser[username]
         pc?.addIceCandidate(iceCandidate)
+    }
+
+    fun sendMessageToDataChannel(nickname: String, chatMessage: ChatMessage){
+        val channel = dataChannelMapByUser[nickname]
+
+        val jsonString = Json.encodeToString(chatMessage)
+        val bytes = jsonString.toByteArray(Charsets.UTF_8)
+        val buffer = ByteBuffer.allocateDirect(bytes.size)
+        buffer.put(bytes)
+        buffer.flip()
+
+        channel?.send(DataChannel.Buffer(buffer, false))
     }
 
     fun createConnectionFactory(context: Context){
@@ -68,7 +83,7 @@ class WebRtcClient private constructor() {
     }
 
     fun createPeerConnection(
-        nickname: String, onSuccessConnect: (String) -> Unit,
+        nickname: String, onSuccessConnect: (String) -> Unit, onMessage: (DataChannel.Buffer?) -> Unit,
         onConnectionClosed: (String) -> Unit, onIceCands: (IceCandidate) -> Unit
     ): PeerConnection? {
         val peerFactory = factory ?: throw IllegalStateException("Not initialized")
@@ -98,10 +113,11 @@ class WebRtcClient private constructor() {
             }
         }
 
+        //TODO: Возможно у получателя соединениня создается пустой DataChannel
         val peerConnection = peerFactory.createPeerConnection(rtcConfig, observer)
         peerConnection?.let {
             peerConnectionMapByUser[nickname] = peerConnection
-            val dataChannel = createDataChannel(nickname, it, onSuccessConnect)
+            val dataChannel = createDataChannel(nickname, it, onSuccessConnect, onMessage)
             dataChannel?.let { ch -> dataChannelMapByUser.put(nickname, ch) }
         }
         return peerConnection
@@ -129,27 +145,28 @@ class WebRtcClient private constructor() {
     }
 
     fun createDataChannel(
-        nickname: String, peerConnection: PeerConnection,
-        onSuccessConnect: (String) -> Unit, label: String = "channel"
+        nickname: String, peerConnection: PeerConnection, onSuccessConnect: (String) -> Unit,
+        onMessage: (DataChannel.Buffer?) -> Unit, label: String = "channel"
     ): DataChannel? {
         val init = DataChannel.Init().apply {
             ordered = true
             maxRetransmitTimeMs = -1
         }
         val dc = peerConnection.createDataChannel(label, init)
-        setupDataChannelsObserver(nickname, dc, onSuccessConnect)
+        setupDataChannelsObserver(nickname, dc, onSuccessConnect, onMessage)
         return dc
     }
 
     //TODO: Реализовать методы
     fun setupDataChannelsObserver(
-        nickname: String, dataChannel: DataChannel, onSuccessConnect: (String) -> Unit
+        nickname: String, dataChannel: DataChannel,
+        onSuccessConnect: (String) -> Unit, onInputMessage: (DataChannel.Buffer?) -> Unit
     ){
         dataChannel.registerObserver(object: DataChannelObserver(){
             override fun onMessage(p0: DataChannel.Buffer?) {
-                super.onMessage(p0)
+                println("Получено сообщение по WebRTC")
+                onInputMessage(p0)
             }
-
             override fun onStateChange() {
                 println("Состояние DataChannel изменилось, текущее: ${dataChannel.state()}")
                 if(dataChannel.state() == DataChannel.State.OPEN){

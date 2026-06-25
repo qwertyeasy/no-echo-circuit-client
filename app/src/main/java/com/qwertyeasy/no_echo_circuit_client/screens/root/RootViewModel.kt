@@ -2,14 +2,16 @@ package com.qwertyeasy.no_echo_circuit_client.screens.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.qwertyeasy.no_echo_circuit_client.data.ChatMessage
 import com.qwertyeasy.no_echo_circuit_client.data.NotificationData
 import com.qwertyeasy.no_echo_circuit_client.data.SocketMessage
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateDto
-import com.qwertyeasy.no_echo_circuit_client.data.connectdto.SdpMessage
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateMessage
 import com.qwertyeasy.no_echo_circuit_client.data.enums.AddingStatus
+import com.qwertyeasy.no_echo_circuit_client.data.connectdto.SdpMessage
 import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.data.enums.ResponseType
+import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.service.NetworkService
 import com.qwertyeasy.no_echo_circuit_client.service.WebRtcClient
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.RtcSdpObserver
@@ -17,8 +19,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
 import org.webrtc.SessionDescription
 import java.util.ArrayDeque
@@ -37,10 +39,15 @@ class RootViewModel: ViewModel() {
     private val _isLogin = MutableStateFlow(false)
     val isLogin = _isLogin.asStateFlow()
     private val webRtcClient = WebRtcClient.instance
+    private var chatViewModel: ChatViewModel? = null
     private var myName: String? = null
 
     init {
         handleServerMessage()
+    }
+
+    fun setChatViewModel(chatViewModel: ChatViewModel){
+        this.chatViewModel = chatViewModel
     }
 
     fun sendMessage(type: MessageType, payload: String? = null){
@@ -79,6 +86,10 @@ class RootViewModel: ViewModel() {
         myName = name
     }
 
+    fun getMyName(): String{
+        return myName!!
+    }
+
     fun addConnectionView(nickname: String){
         _connectedUsers.value += nickname
         println("Добавляю $nickname в список, текущее количество - ${_connectedUsers.value.size}")
@@ -97,15 +108,18 @@ class RootViewModel: ViewModel() {
         println("Отправление запроса к пользователю $nickname")
         if(isUserConnected(nickname)){
             println("Пользователь уже был подключён. Запрос будет проигнорирован")
+            chatViewModel!!.currentChatName = nickname
             onSuccessConnect(nickname)
             return
         }
         val onSuccessConnectAndForward: (String) -> Unit = {
             addConnectionView(it)
+            chatViewModel!!.currentChatName = it
             onSuccessConnect(it)
         }
         val pc = webRtcClient.createPeerConnection(
             nickname, onSuccessConnectAndForward,
+            { receiveMessage(nickname, it) },
             { removeConnectionView(it) }
         ){
             sendMessage(MessageType.ICE, Json.encodeToString(
@@ -134,6 +148,7 @@ class RootViewModel: ViewModel() {
 
         val pc = webRtcClient.createPeerConnection(answerRequest.from,
             { addConnectionView(it) },
+            { receiveMessage(answerRequest.from, it) },
             { removeConnectionView(it) }
         ){
             sendMessage(MessageType.ICE, Json.encodeToString(
@@ -166,6 +181,21 @@ class RootViewModel: ViewModel() {
         println("Получен ответ от пользователя ${sdpMessage.from}: $responseSdp")
 
         webRtcClient.setRemoteSdpByNickname(sdpMessage.from, responseSdp)
+    }
+
+    fun receiveMessage(nickname: String, buffer: DataChannel.Buffer?){
+        buffer?.let {
+            val byteArray = ByteArray(buffer.data.remaining())
+            buffer.data.get(byteArray)
+            val jsonString = String(byteArray, Charsets.UTF_8)
+            val chatMessage = Json.decodeFromString<ChatMessage>(jsonString)
+
+            chatViewModel!!.onMessageReceived(chatMessage)
+        }
+    }
+
+    fun sendWebRTCMessage(chatMessage: ChatMessage){
+        webRtcClient.sendMessageToDataChannel(chatMessage.to, chatMessage)
     }
 
     fun onListRefresh(){

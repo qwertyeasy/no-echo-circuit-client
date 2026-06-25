@@ -6,11 +6,7 @@ plugins {
 
 android {
     namespace = "com.qwertyeasy.no_echo_circuit_client"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk  = 37
 
     defaultConfig {
         applicationId = "com.qwertyeasy.no_echo_circuit_client"

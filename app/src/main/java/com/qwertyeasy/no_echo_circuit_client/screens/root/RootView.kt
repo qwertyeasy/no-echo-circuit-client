@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatScreen
+import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.screens.login.LoginScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.root.popup.FailedToConnectPopup
@@ -21,6 +22,8 @@ import kotlin.system.exitProcess
 fun RootView(){
     val navController = rememberNavController()
     val rootViewModel: RootViewModel = viewModel()
+    val chatViewModel: ChatViewModel = viewModel()
+    rootViewModel.setChatViewModel(chatViewModel)
 
     Box(Modifier.fillMaxSize()) {
 
@@ -44,7 +47,7 @@ fun RootView(){
                 }
             }
             composable(Screens.CHAT){
-                ChatScreen()
+                ChatScreen(chatViewModel, rootViewModel)
             }
         }
     }
