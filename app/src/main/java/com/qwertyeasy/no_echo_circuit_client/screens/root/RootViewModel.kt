@@ -7,6 +7,7 @@ import com.qwertyeasy.no_echo_circuit_client.data.NotificationData
 import com.qwertyeasy.no_echo_circuit_client.data.SocketMessage
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateDto
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateMessage
+import com.qwertyeasy.no_echo_circuit_client.data.enums.AddingStatus
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.SdpMessage
 import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.data.enums.ResponseType
@@ -24,10 +25,19 @@ import org.webrtc.IceCandidate
 import org.webrtc.SessionDescription
 import java.util.ArrayDeque
 import java.util.Queue
+import kotlin.collections.emptySet
+import kotlin.time.Duration.Companion.seconds
 
-class RootViewModel(): ViewModel() {
+class RootViewModel: ViewModel() {
 
-    private val networkService = NetworkService(viewModelScope)
+    private val networkService = NetworkService(
+        viewModelScope, { _isFailedToConnect.value = true }
+    )
+
+    private val _isFailedToConnect = MutableStateFlow(false)
+    val isFailedToConnect = _isFailedToConnect.asStateFlow()
+    private val _isLogin = MutableStateFlow(false)
+    val isLogin = _isLogin.asStateFlow()
     private val webRtcClient = WebRtcClient.instance
     private var chatViewModel: ChatViewModel? = null
     private var myName: String? = null
@@ -55,6 +65,15 @@ class RootViewModel(): ViewModel() {
 
     private val _connectedUsers = MutableStateFlow<Set<String>>(emptySet())
     val connectedUsers = _connectedUsers.asStateFlow()
+
+    fun retryConnectToWs(){
+        _isFailedToConnect.value = false
+        networkService.connect()
+    }
+
+    fun onSuccessLogin(){
+        _isLogin.value = true
+    }
 
     fun onAddButtonClicked(){
         sendMessage(MessageType.ADD, Json.encodeToString(
@@ -186,10 +205,23 @@ class RootViewModel(): ViewModel() {
     private val _closePopup = MutableStateFlow(false)
     val closePopup = _closePopup.asStateFlow()
 
+    private val _addStatusIcon = MutableStateFlow(AddingStatus.NONE)
+    val addStatusIcon = _addStatusIcon.asStateFlow()
+
     fun onAddOk(){
         viewModelScope.launch {
-            delay(2000)
+            _addStatusIcon.value = AddingStatus.ADD_OK
+            delay(2.seconds)
             _closePopup.value = true
+            _addStatusIcon.value = AddingStatus.NONE
+        }
+    }
+
+    fun onAddFail(){
+        viewModelScope.launch {
+            _addStatusIcon.value = AddingStatus.ADD_FAIL
+            delay(4.seconds)
+            _addStatusIcon.value = AddingStatus.NONE
         }
     }
 
@@ -234,11 +266,11 @@ class RootViewModel(): ViewModel() {
                 // TODO: обработать множество сообщений
                 when(msg.type){
                     ResponseType.SERVER_CONNECT -> println("Success connection with server")
-                    ResponseType.SUCCESS_LOGIN -> println("Пользователь успешно залогинился")
+                    ResponseType.SUCCESS_LOGIN -> onSuccessLogin()
                     ResponseType.USERS_LIST -> onListRefreshReceived(msg.payload!!)
                     ResponseType.NOTIFY_ABOUT_ADD -> onNotifyReceived(msg.payload!!)
                     ResponseType.ADD_OK -> onAddOk()
-                    ResponseType.ADD_FAIL -> println("Пользователь не был добавлен")
+                    ResponseType.ADD_FAIL -> onAddFail()
                     ResponseType.USER_OFFLINE -> println("Запрошенный пользователь отключился")
                     ResponseType.ANSWER_REQUEST -> onAnswerRequest(msg.payload!!)
                     ResponseType.ANSWER_RESPONSE -> onAnswerResponse(msg.payload!!)

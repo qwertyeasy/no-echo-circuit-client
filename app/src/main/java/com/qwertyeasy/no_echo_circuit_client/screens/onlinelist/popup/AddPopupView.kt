@@ -1,5 +1,6 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.popup
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,8 +18,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.qwertyeasy.no_echo_circuit_client.R
 import com.qwertyeasy.no_echo_circuit_client.components.DismissSpacer
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
 import com.qwertyeasy.no_echo_circuit_client.components.MultiLineTextField
@@ -25,6 +30,7 @@ import com.qwertyeasy.no_echo_circuit_client.components.PixelTextButton
 import com.qwertyeasy.no_echo_circuit_client.components.prepareBorder
 import com.qwertyeasy.no_echo_circuit_client.components.TableTextField
 import com.qwertyeasy.no_echo_circuit_client.components.VerticalLine
+import com.qwertyeasy.no_echo_circuit_client.data.enums.AddingStatus
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListViewModel
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
@@ -61,7 +67,7 @@ fun PopupInnerTable(onlineViewModel: OnlineListViewModel, rootViewModel: RootVie
 
     Column(modifier.border(prepareBorder(BlackBack))
     ) {
-        PopupTableUpperRow(onlineViewModel, Modifier.weight(0.4f))
+        PopupTableUpperRow(onlineViewModel, rootViewModel, Modifier.weight(0.4f))
         HorizontalLine(BlackBack)
         AddNickInputBLock(onlineViewModel, Modifier
             .fillMaxWidth()
@@ -73,11 +79,32 @@ fun PopupInnerTable(onlineViewModel: OnlineListViewModel, rootViewModel: RootVie
 }
 
 @Composable
-fun PopupTableUpperRow(onlineViewModel: OnlineListViewModel, modifier: Modifier){
+fun PopupTableUpperRow(onlineViewModel: OnlineListViewModel, rootViewModel: RootViewModel, modifier: Modifier){
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(0.3f))
+        StatusIcon(Modifier.weight(0.3f), rootViewModel)
         VerticalLine(BlackBack)
         AddDescriptionBlock(onlineViewModel, Modifier.weight(0.7f))
+    }
+}
+
+@Composable
+fun StatusIcon(modifier: Modifier, rootViewModel: RootViewModel){
+    val addingStatus by rootViewModel.addStatusIcon.collectAsState()
+
+    Box(modifier){
+        val resource = when(addingStatus){
+            AddingStatus.ADD_OK -> painterResource(R.drawable.add_ok)
+            AddingStatus.ADD_FAIL -> painterResource(R.drawable.add_fail)
+            AddingStatus.NONE -> null
+        }
+        resource?.let {
+            Image(
+                painter = resource,
+                modifier = Modifier.size(70.dp),
+                contentDescription = "AddStatusIcon",
+                colorFilter = ColorFilter.tint(BlackBack)
+            )
+        }
     }
 }
 
