@@ -13,30 +13,28 @@ import androidx.navigation.compose.rememberNavController
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.login.LoginScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListScreen
+import com.qwertyeasy.no_echo_circuit_client.screens.root.popup.FailedToConnectPopup
 import com.qwertyeasy.no_echo_circuit_client.screens.root.popup.NotificationPopup
+import kotlin.system.exitProcess
 
 @Composable
 fun RootView(){
     val navController = rememberNavController()
     val rootViewModel: RootViewModel = viewModel()
 
-    val currentNotification by rootViewModel.currentNotification.collectAsState()
-
     Box(Modifier.fillMaxSize()) {
 
-        if(currentNotification != null){
-            NotificationPopup(rootViewModel, currentNotification!!)
-        }
+        RootPopups(rootViewModel)
         NavHost(
             navController = navController,
             startDestination = Screens.LOGIN
         ) {
             composable(Screens.LOGIN) {
-                LoginScreen(rootViewModel, {
+                LoginScreen(rootViewModel) {
                     navController.navigate(Screens.ONLINE_LIST) {
                         popUpTo(Screens.LOGIN) { inclusive = true }
                     }
-                })
+                }
             }
             composable(Screens.ONLINE_LIST) {
                 OnlineListScreen(rootViewModel){
@@ -49,5 +47,24 @@ fun RootView(){
                 ChatScreen()
             }
         }
+    }
+}
+
+@Composable
+fun RootPopups(rootViewModel: RootViewModel){
+    val currentNotification by rootViewModel.currentNotification.collectAsState()
+    val isFailedToConnect by rootViewModel.isFailedToConnect.collectAsState()
+
+    if(isFailedToConnect){
+        FailedToConnectPopup(
+            { rootViewModel.retryConnectToWs() }, { exitProcess(0) }
+        )
+    }
+    if(currentNotification != null){
+        NotificationPopup(
+            { rootViewModel.onNotifyDismiss() },
+            { rootViewModel.onAddButtonClicked() },
+            { rootViewModel.checkNextNotification() }, currentNotification!!
+        )
     }
 }

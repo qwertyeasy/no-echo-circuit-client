@@ -19,28 +19,30 @@ import com.qwertyeasy.no_echo_circuit_client.components.DismissSpacer
 import com.qwertyeasy.no_echo_circuit_client.components.SmallPixelTextButton
 import com.qwertyeasy.no_echo_circuit_client.components.prepareFatBorder
 import com.qwertyeasy.no_echo_circuit_client.data.NotificationData
-import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 
 @Composable
-fun NotificationPopup(rootViewModel: RootViewModel, currentNotification: NotificationData){
+fun NotificationPopup(
+    onNotifyDismiss: () -> Unit, onAddButtonClicked: () -> Unit,
+    checkNextNotification: () -> Unit, currentNotification: NotificationData
+){
     val descriptSize = calcDescriptSize(currentNotification.description)
     val columnHeight = 300.dp + descriptSize
 
     Column(Modifier.zIndex(1f).fillMaxSize()) {
-        DismissSpacer(Modifier.weight(0.7f), { rootViewModel.onNotifyDismiss() })
+        DismissSpacer(Modifier.weight(0.7f), onNotifyDismiss)
         Column(Modifier.height(columnHeight)
             .fillMaxSize().background(NeonPurple)
         ) {
             Spacer(Modifier.weight(0.08f))
             TextBlock(Modifier.height(descriptSize), currentNotification)
             Spacer(Modifier.weight(0.04f))
-            ButtonsBlock(Modifier.weight(0.25f), rootViewModel)
+            ButtonsBlock(Modifier.weight(0.25f), onAddButtonClicked, checkNextNotification)
             Spacer(Modifier.weight(0.08f))
         }
-        DismissSpacer(Modifier.height(100.dp), { rootViewModel.onNotifyDismiss() })
+        DismissSpacer(Modifier.height(100.dp), onNotifyDismiss)
     }
 }
 
@@ -61,14 +63,14 @@ fun TextBlock(modifier: Modifier, currentNotification: NotificationData){
 }
 
 @Composable
-fun ButtonsBlock(modifier: Modifier, rootViewModel: RootViewModel){
+fun ButtonsBlock(modifier: Modifier, onAddButtonClicked: () -> Unit, checkNextNotification: () -> Unit){
     Row(modifier) {
         Spacer(Modifier.weight(0.05f))
         SmallPixelTextButton("add", Modifier.weight(0.4f).border(prepareFatBorder(BlackBack)),
-            NeonPurple, BlackBack, { rootViewModel.onAddButtonClicked() })
+            NeonPurple, BlackBack, onAddButtonClicked)
         Spacer(Modifier.weight(0.02f))
         SmallPixelTextButton("ignore", Modifier.weight(0.6f).border(prepareFatBorder(BlackBack)),
-            BlackBack,NeonPurple, { rootViewModel.checkNextNotification() })
+            BlackBack,NeonPurple, checkNextNotification)
         Spacer(Modifier.weight(0.05f))
     }
 }

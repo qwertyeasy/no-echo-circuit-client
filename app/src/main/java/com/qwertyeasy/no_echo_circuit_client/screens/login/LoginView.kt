@@ -41,11 +41,14 @@ import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 
 @Composable
-fun LoginScreen(rootViewModel: RootViewModel, onLoginSuccess: () -> Unit){
+fun LoginScreen(rootViewModel: RootViewModel, onSuccessLogin: () -> Unit){
     val loginViewModel: LoginViewModel = viewModel()
+
+    val isLogin by rootViewModel.isLogin.collectAsState()
+    if(isLogin){ onSuccessLogin() }
+
     Scaffold(
         content = { padding ->
-            // общий контейнер из 2 блоков
             Column (modifier = Modifier
                 .background(LightGrey)
                 .fillMaxSize(),
@@ -53,7 +56,7 @@ fun LoginScreen(rootViewModel: RootViewModel, onLoginSuccess: () -> Unit){
             ) {
                 UpperBlock(Modifier.weight(0.45f), padding)
                 BottomBlock(
-                    rootViewModel, loginViewModel, Modifier.weight(0.65f), onLoginSuccess
+                    rootViewModel, loginViewModel, Modifier.weight(0.65f)
                 )
             }
         }
@@ -89,8 +92,7 @@ fun UpperBlock(modifier: Modifier, padding: PaddingValues){
 
 @Composable
 fun BottomBlock(
-    rootViewModel: RootViewModel, viewModel: LoginViewModel,
-    modifier: Modifier, onLoginSuccess: () -> Unit
+    rootViewModel: RootViewModel, viewModel: LoginViewModel, modifier: Modifier
 ){
     Row(
         modifier
@@ -105,8 +107,7 @@ fun BottomBlock(
             InnerTable(rootViewModel, viewModel,
                 modifier = Modifier
                     .weight(0.7f)
-                    .border(prepareBorder(color = NeonPurple)),
-                onLoginSuccess)
+                    .border(prepareBorder(color = NeonPurple)))
             Column(modifier = Modifier.weight(0.12f),
                 verticalArrangement = Arrangement.Center
             ){
@@ -120,8 +121,7 @@ fun BottomBlock(
 
 @Composable
 fun InnerTable(
-    rootViewModel: RootViewModel, viewModel: LoginViewModel,
-    modifier: Modifier, onLoginSuccess: () -> Unit
+    rootViewModel: RootViewModel, viewModel: LoginViewModel, modifier: Modifier
 ){
     Column (modifier = modifier){
         TableUpperRow(Modifier.weight(0.4f))
@@ -135,8 +135,8 @@ fun InnerTable(
         TitleButton("ENTER→", Modifier.weight(0.4f), BlackBack,
             NeonPurple, {
                 viewModel.onEnterClicked(rootViewModel)
-                onLoginSuccess()
-            })
+            }
+        )
     }
 }
 
