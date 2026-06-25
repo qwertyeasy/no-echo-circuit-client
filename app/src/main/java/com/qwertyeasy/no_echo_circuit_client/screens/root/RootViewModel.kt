@@ -213,7 +213,7 @@ class RootViewModel: ViewModel() {
             _addStatusIcon.value = AddingStatus.ADD_OK
             delay(2.seconds)
             _closePopup.value = true
-            _addStatusIcon.value = AddingStatus.NONE
+            resetAddingIcon()
         }
     }
 
@@ -221,8 +221,12 @@ class RootViewModel: ViewModel() {
         viewModelScope.launch {
             _addStatusIcon.value = AddingStatus.ADD_FAIL
             delay(4.seconds)
-            _addStatusIcon.value = AddingStatus.NONE
+            resetAddingIcon()
         }
+    }
+
+    fun resetAddingIcon(){
+        _addStatusIcon.value = AddingStatus.NONE
     }
 
     fun onClosePopupReset(){

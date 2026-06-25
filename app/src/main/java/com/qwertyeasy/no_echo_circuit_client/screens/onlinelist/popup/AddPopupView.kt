@@ -91,7 +91,7 @@ fun PopupTableUpperRow(onlineViewModel: OnlineListViewModel, rootViewModel: Root
 fun StatusIcon(modifier: Modifier, rootViewModel: RootViewModel){
     val addingStatus by rootViewModel.addStatusIcon.collectAsState()
 
-    Box(modifier){
+    Box(modifier, contentAlignment = Alignment.Center){
         val resource = when(addingStatus){
             AddingStatus.ADD_OK -> painterResource(R.drawable.add_ok)
             AddingStatus.ADD_FAIL -> painterResource(R.drawable.add_fail)
@@ -100,7 +100,7 @@ fun StatusIcon(modifier: Modifier, rootViewModel: RootViewModel){
         resource?.let {
             Image(
                 painter = resource,
-                modifier = Modifier.size(70.dp),
+                modifier = Modifier.size(60.dp),
                 contentDescription = "AddStatusIcon",
                 colorFilter = ColorFilter.tint(BlackBack)
             )

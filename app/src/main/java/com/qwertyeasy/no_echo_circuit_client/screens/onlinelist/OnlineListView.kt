@@ -51,10 +51,11 @@ fun OnlineListScreen(
     val closePopupCall = {
         showPopup = false
         onlineViewModel.onPopupDismiss()
+        rootViewModel.resetAddingIcon()
+        rootViewModel.onClosePopupReset()
     }
     if(closePopup){
         closePopupCall()
-        rootViewModel.onClosePopupReset()
     }
     if(showPopup) {
         UserAddingPopup(onlineViewModel, rootViewModel, closePopupCall)
