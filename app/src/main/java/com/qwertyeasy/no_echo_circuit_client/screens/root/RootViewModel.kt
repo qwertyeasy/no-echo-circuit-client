@@ -2,7 +2,6 @@ package com.qwertyeasy.no_echo_circuit_client.screens.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qwertyeasy.no_echo_circuit_client.data.ChatMessage
 import com.qwertyeasy.no_echo_circuit_client.data.NotificationData
 import com.qwertyeasy.no_echo_circuit_client.data.SocketMessage
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.IceCandidateDto
@@ -11,6 +10,7 @@ import com.qwertyeasy.no_echo_circuit_client.data.enums.AddingStatus
 import com.qwertyeasy.no_echo_circuit_client.data.connectdto.SdpMessage
 import com.qwertyeasy.no_echo_circuit_client.data.enums.MessageType
 import com.qwertyeasy.no_echo_circuit_client.data.enums.ResponseType
+import com.qwertyeasy.no_echo_circuit_client.database.entity.MessageEntity
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.service.NetworkService
 import com.qwertyeasy.no_echo_circuit_client.service.WebRtcClient
@@ -119,7 +119,7 @@ class RootViewModel: ViewModel() {
         }
         val pc = webRtcClient.createPeerConnection(
             nickname, onSuccessConnectAndForward,
-            { receiveMessage(nickname, it) },
+            { receiveMessage(it) },
             { removeConnectionView(it) }
         ){
             sendMessage(MessageType.ICE, Json.encodeToString(
@@ -148,7 +148,7 @@ class RootViewModel: ViewModel() {
 
         val pc = webRtcClient.createPeerConnection(answerRequest.from,
             { addConnectionView(it) },
-            { receiveMessage(answerRequest.from, it) },
+            { receiveMessage(it) },
             { removeConnectionView(it) }
         ){
             sendMessage(MessageType.ICE, Json.encodeToString(
@@ -183,19 +183,15 @@ class RootViewModel: ViewModel() {
         webRtcClient.setRemoteSdpByNickname(sdpMessage.from, responseSdp)
     }
 
-    fun receiveMessage(nickname: String, buffer: DataChannel.Buffer?){
+    fun receiveMessage(buffer: DataChannel.Buffer?){
         buffer?.let {
-            val byteArray = ByteArray(buffer.data.remaining())
-            buffer.data.get(byteArray)
-            val jsonString = String(byteArray, Charsets.UTF_8)
-            val chatMessage = Json.decodeFromString<ChatMessage>(jsonString)
-
-            chatViewModel!!.onMessageReceived(chatMessage)
+            val messageEntity = webRtcClient.parseMessageFromBuffer(buffer)
+            chatViewModel!!.onMessageReceived(messageEntity)
         }
     }
 
-    fun sendWebRTCMessage(chatMessage: ChatMessage){
-        webRtcClient.sendMessageToDataChannel(chatMessage.to, chatMessage)
+    fun sendWebRTCMessage(messageEntity: MessageEntity){
+        webRtcClient.sendMessageToDataChannel(messageEntity)
     }
 
     fun onListRefresh(){

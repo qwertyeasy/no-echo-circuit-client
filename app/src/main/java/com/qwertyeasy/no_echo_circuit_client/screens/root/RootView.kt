@@ -6,10 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.qwertyeasy.no_echo_circuit_client.database.DatabaseProvider
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.screens.login.LoginScreen
@@ -22,7 +24,10 @@ import kotlin.system.exitProcess
 fun RootView(){
     val navController = rememberNavController()
     val rootViewModel: RootViewModel = viewModel()
-    val chatViewModel: ChatViewModel = viewModel()
+
+    val dao = DatabaseProvider.getDatabase(LocalContext.current).messageDao()
+    val chatViewModel: ChatViewModel = viewModel(){ ChatViewModel(dao) }
+
     rootViewModel.setChatViewModel(chatViewModel)
 
     Box(Modifier.fillMaxSize()) {

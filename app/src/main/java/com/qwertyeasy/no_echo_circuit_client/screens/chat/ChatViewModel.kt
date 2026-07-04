@@ -2,71 +2,79 @@ package com.qwertyeasy.no_echo_circuit_client.screens.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.qwertyeasy.no_echo_circuit_client.data.ChatMessage
-import com.qwertyeasy.no_echo_circuit_client.data.TextMessage
+import com.qwertyeasy.no_echo_circuit_client.database.dao.MessageDao
+import com.qwertyeasy.no_echo_circuit_client.database.entity.MessageEntity
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlin.collections.plus
+import kotlinx.coroutines.launch
 
-class ChatViewModel: ViewModel() {
-
-    private val _chats = MutableStateFlow<Map<String,List<ChatMessage>>>(mapOf())
-    val chats = _chats.asStateFlow()
-    var currentChatName: String? = null
-
-    fun getCurrentChat(): StateFlow<List<ChatMessage>> {
-        return chats.map {
-            it[currentChatName] ?: emptyList()
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-    }
+class ChatViewModel(val messageDao: MessageDao): ViewModel() {
 
     private val _messageInput = MutableStateFlow("")
     val messageInput = _messageInput.asStateFlow()
+    private val messageSplit = true
+    var currentChatName: String? = null
 
-    fun onMessageChanged(newText: String){
+    fun getCurrentChat(): Flow<List<MessageEntity>> {
+        return messageDao.getMessages(currentChatName!!)
+    }
+
+    fun onMessageChanged(rootViewModel: RootViewModel, newText: String){
         _messageInput.value = newText
+        if(messageSplit) {
+            sendMessageToChannel(rootViewModel, false)
+        }
     }
 
-    fun onMessageReceived(chatMessage: ChatMessage){
-        saveMessageToChat(chatMessage.from, chatMessage)
+    fun onMessageReceived(messageEntity: MessageEntity){
+        viewModelScope.launch {
+            val notCompleted = messageDao.findNotCompletedMessage(
+                messageEntity.fromUser
+            )
+            if(notCompleted != null){
+                notCompleted.data = messageEntity.data
+                notCompleted.isCompleted = messageEntity.isCompleted
+                messageDao.updateMessage(notCompleted)
+            } else {
+                messageDao.insertMessage(messageEntity)
+            }
+        }
     }
 
-    fun onClipClicked(){
-        //TODO: Добавление в отдельное поле и проверка при отправке?
+    fun saveMessageToDatabase(messageEntity: MessageEntity){
+        viewModelScope.launch {
+            messageDao.insertMessage(messageEntity)
+        }
+    }
+
+    fun sendMessageToChannel(
+        rootViewModel: RootViewModel, isMessageCompleted: Boolean
+    ): MessageEntity{
+        val messageEntity = MessageEntity(
+            fromUser = rootViewModel.getMyName(),
+            toUser = currentChatName!!,
+            data = _messageInput.value,
+            isCompleted = isMessageCompleted,
+        )
+        rootViewModel.sendWebRTCMessage(messageEntity)
+        return messageEntity
     }
 
     fun onSendClicked(rootViewModel: RootViewModel){
         println("Отправка сообщения: ${_messageInput.value}")
-        val chatMessage = ChatMessage(
-            rootViewModel.getMyName(), currentChatName!!,
-            TextMessage(_messageInput.value)
-        )
-        rootViewModel.sendWebRTCMessage(chatMessage)
 
-        saveMessageToChat(currentChatName!!, chatMessage)
+        val chatMessage = sendMessageToChannel(rootViewModel, true)
+        saveMessageToDatabase(chatMessage)
         _messageInput.value = ""
     }
 
-    fun saveMessageToChat(nickname: String, chatMessage: ChatMessage){
-        if(!_chats.value.contains(nickname)) {
-            _chats.value += nickname to listOf(chatMessage)
-        } else {
-            _chats.value += nickname to (
-                    _chats.value[nickname]!!.plus(chatMessage)
-            )
-        }
+    fun onSendPressed(){
+        //TODO: Доп функциональность
     }
 
-    fun onSendPressed(){
-
+    fun onClipClicked(){
+        //TODO: Добавление в отдельное поле и проверка при отправке?
     }
 }

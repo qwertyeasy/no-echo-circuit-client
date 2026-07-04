@@ -3,7 +3,7 @@ package com.qwertyeasy.no_echo_circuit_client.service
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import com.qwertyeasy.no_echo_circuit_client.data.ChatMessage
+import com.qwertyeasy.no_echo_circuit_client.database.entity.MessageEntity
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.ConnectionObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.DataChannelObserver
 import com.qwertyeasy.no_echo_circuit_client.service.blankobservers.RtcSdpObserver
@@ -31,16 +31,24 @@ class WebRtcClient private constructor() {
         pc?.addIceCandidate(iceCandidate)
     }
 
-    fun sendMessageToDataChannel(nickname: String, chatMessage: ChatMessage){
-        val channel = dataChannelMapByUser[nickname]
+    fun sendMessageToDataChannel(messageEntity: MessageEntity){
+        val channel = dataChannelMapByUser[messageEntity.toUser]
 
-        val jsonString = Json.encodeToString(chatMessage)
+        val jsonString = Json.encodeToString(messageEntity)
         val bytes = jsonString.toByteArray(Charsets.UTF_8)
         val buffer = ByteBuffer.allocateDirect(bytes.size)
         buffer.put(bytes)
         buffer.flip()
 
         channel?.send(DataChannel.Buffer(buffer, false))
+    }
+
+    fun parseMessageFromBuffer(buffer: DataChannel.Buffer): MessageEntity{
+        val byteArray = ByteArray(buffer.data.remaining())
+        buffer.data.get(byteArray)
+        val jsonString = String(byteArray, Charsets.UTF_8)
+
+        return Json.decodeFromString<MessageEntity>(jsonString)
     }
 
     fun createConnectionFactory(context: Context){

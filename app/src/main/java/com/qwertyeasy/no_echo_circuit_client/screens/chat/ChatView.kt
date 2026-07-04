@@ -28,8 +28,6 @@ import androidx.compose.ui.unit.sp
 import com.qwertyeasy.no_echo_circuit_client.R
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
 import com.qwertyeasy.no_echo_circuit_client.components.MultiLineTextField
-import com.qwertyeasy.no_echo_circuit_client.data.MessageData
-import com.qwertyeasy.no_echo_circuit_client.data.TextMessage
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
@@ -37,7 +35,9 @@ import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 
 @Composable
 fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
-    Box(modifier = Modifier.fillMaxSize().background(BlackBack),
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(BlackBack),
         contentAlignment = Alignment.TopStart
     ) {
         ChatBackground()
@@ -69,7 +69,7 @@ fun BottomInputField(
             Box(Modifier.weight(0.8f)) {
                 MultiLineTextField(
                     messageInput, BlackBack, NeonPurple,
-                    { chatViewModel.onMessageChanged(it) })
+                    { chatViewModel.onMessageChanged(rootViewModel, it) })
             }
             SquareButton(Modifier.weight(0.12f), R.drawable.arrow,
                 { chatViewModel.onSendClicked(rootViewModel) },
@@ -81,11 +81,13 @@ fun BottomInputField(
 @Composable
 fun SquareButton(modifier: Modifier, iconId: Int,
                  onClick: () -> Unit, onLongClick: () -> Unit){
-    Box(modifier = modifier.fillMaxSize()
+    Box(modifier = modifier
+        .fillMaxSize()
         .background(NeonPurple)
         .combinedClickable(
             onClick = onClick,
-            onLongClick = onLongClick),
+            onLongClick = onLongClick
+        ),
         contentAlignment = Alignment.Center
     ){
         Image(
@@ -99,13 +101,13 @@ fun SquareButton(modifier: Modifier, iconId: Int,
 
 @Composable
 fun ChatBlock(modifier: Modifier, chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
-    val chatList by chatViewModel.getCurrentChat().collectAsState()
+    val chatList by chatViewModel.getCurrentChat().collectAsState(emptyList())
     val myName = rootViewModel.getMyName()
 
     LazyColumn(modifier = modifier, reverseLayout = true) {
         items(chatList.reversed()){ item ->
 
-            val isMain = item.from == myName
+            val isMain = item.fromUser == myName
             val alignment = if(isMain) Alignment.CenterEnd else Alignment.CenterStart
             Box(modifier = Modifier.fillMaxWidth(),
                 contentAlignment = alignment
@@ -117,16 +119,15 @@ fun ChatBlock(modifier: Modifier, chatViewModel: ChatViewModel, rootViewModel: R
 }
 
 @Composable
-fun MessageField(isMain: Boolean, data: MessageData){
+fun MessageField(isMain: Boolean, data: String){
     val boxColor = if (isMain) NeonPurple else BlackBack
     val textColor = if (isMain) BlackBack else NeonPurple
 
-    if(data is TextMessage)
-        Box(
-            modifier = Modifier
-                .background(boxColor, shape = RoundedCornerShape(20.dp))
-                .padding(10.dp),
-        ){
-            Text(text = data.text, color = textColor, fontSize = 20.sp, textAlign = TextAlign.Start)
-        }
+    Box(
+        modifier = Modifier
+            .background(boxColor, shape = RoundedCornerShape(20.dp))
+            .padding(10.dp),
+    ) {
+        Text(text = data, color = textColor, fontSize = 20.sp, textAlign = TextAlign.Start)
+    }
 }
