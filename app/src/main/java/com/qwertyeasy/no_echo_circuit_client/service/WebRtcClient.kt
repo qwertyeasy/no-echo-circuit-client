@@ -15,6 +15,7 @@ import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.SessionDescription
 import java.nio.ByteBuffer
+import kotlin.collections.listOf
 
 class WebRtcClient private constructor() {
 
@@ -77,10 +78,11 @@ class WebRtcClient private constructor() {
 
     fun getIceServers(): List<PeerConnection.IceServer>{
         return listOf(
-            PeerConnection.IceServer.builder(
-                "stun:stun.l.google.com:19302").createIceServer(),
-            // PeerConnection.IceServer.builder(
-            // "turn:твой-ip:3478").createIceServer()
+            PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
+            PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
+            PeerConnection.IceServer.builder("stun:stun.cloudflare.com:3478").createIceServer(),
+            PeerConnection.IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
+            // PeerConnection.IceServer.builder("turn:твой-ip:3478").createIceServer()
         )
     }
 
@@ -114,7 +116,10 @@ class WebRtcClient private constructor() {
                 }
             }
             override fun onIceCandidate(candidate: IceCandidate?) {
-                candidate?.let{ onIceCands(candidate) }
+                candidate?.let{
+                    println("Собран iceCandidate: sdp - ${candidate.sdp}")
+                    onIceCands(candidate)
+                }
             }
             override fun onDataChannel(channel: DataChannel?) {
                 channel?.let { dataChannelMapByUser.put(nickname, channel) }

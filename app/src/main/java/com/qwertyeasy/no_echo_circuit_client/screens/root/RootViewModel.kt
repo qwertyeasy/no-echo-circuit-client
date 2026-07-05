@@ -252,12 +252,12 @@ class RootViewModel: ViewModel() {
 
     fun onIceReceived(payload: String){
         val msg = Json.decodeFromString<IceCandidateMessage>(payload)
-        println("Получен айс-кандидат от пользователя ${msg.from}")
-
-        val iceCandidate = IceCandidate(
+        val candidate = IceCandidate(
             msg.ice.sdpMid, msg.ice.sdpMLineIndex, msg.ice.candidate
         )
-        webRtcClient.addIceCandidate(msg.from, iceCandidate)
+        println("Получен iceCandidate от пользователя ${msg.from}: sdp - ${candidate.sdp}")
+
+        webRtcClient.addIceCandidate(msg.from, candidate)
     }
 
     private fun handleServerMessage(){
