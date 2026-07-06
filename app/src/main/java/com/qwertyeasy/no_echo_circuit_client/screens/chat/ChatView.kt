@@ -1,8 +1,6 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.chat
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,16 +17,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.qwertyeasy.no_echo_circuit_client.R
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
 import com.qwertyeasy.no_echo_circuit_client.components.MultiLineTextField
+import com.qwertyeasy.no_echo_circuit_client.components.SquareButton
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
+import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 
@@ -42,12 +40,35 @@ fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
     ) {
         ChatBackground()
         Column() {
-            Spacer(Modifier.weight(0.1f))
+            Spacer(Modifier.weight(0.03f))
+            ChatTitle(Modifier.weight(0.08f), chatViewModel)
             ChatBlock(Modifier.weight(0.9f), chatViewModel, rootViewModel)
             BottomInputField(Modifier.weight(0.08f), chatViewModel, rootViewModel)
             Spacer(Modifier.weight(0.03f))
         }
     }
+}
+
+@Composable
+fun ChatTitle(modifier: Modifier, chatViewModel: ChatViewModel){
+    val chatTitle = chatViewModel.currentChatName!!
+    val messageSplit by chatViewModel.messageSplit.collectAsState()
+    val splitIcon = if(messageSplit) R.drawable.add_ok else R.drawable.add_fail
+
+    Row(
+        modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+    ){
+        Spacer(Modifier.weight(0.1f))
+        Box(Modifier.weight(0.9f)) {
+            Text(chatTitle, color = NeonPurple, fontFamily = InterBlack, fontSize = 30.sp)
+        }
+        SquareButton(Modifier.weight(0.1f), splitIcon, Color.Transparent,
+            NeonPurple, 50.dp,
+            { chatViewModel.onMessageSplitSwitch() }, {})
+        Spacer(Modifier.weight(0.1f))
+    }
+    HorizontalLine(NeonPurple)
+    HorizontalLine(BlackBack)
 }
 
 @Composable
@@ -62,40 +83,20 @@ fun BottomInputField(
     val messageInput by chatViewModel.messageInput.collectAsState()
 
     Column(modifier = modifier) {
+        HorizontalLine(BlackBack)
         HorizontalLine(NeonPurple)
         Row {
-            SquareButton(Modifier.weight(0.12f), R.drawable.clip,
-                { chatViewModel.onClipClicked() }, {})
+            SquareButton(Modifier.weight(0.12f), R.drawable.clip, NeonPurple,
+                BlackBack, 30.dp,{ chatViewModel.onClipClicked() }, {})
             Box(Modifier.weight(0.8f)) {
                 MultiLineTextField(
                     messageInput, BlackBack, NeonPurple,
                     { chatViewModel.onMessageChanged(rootViewModel, it) })
             }
-            SquareButton(Modifier.weight(0.12f), R.drawable.arrow,
-                { chatViewModel.onSendClicked(rootViewModel) },
+            SquareButton(Modifier.weight(0.12f), R.drawable.arrow, NeonPurple,
+                BlackBack, 30.dp, { chatViewModel.onSendClicked(rootViewModel) },
                 { chatViewModel.onSendPressed() })
         }
-    }
-}
-
-@Composable
-fun SquareButton(modifier: Modifier, iconId: Int,
-                 onClick: () -> Unit, onLongClick: () -> Unit){
-    Box(modifier = modifier
-        .fillMaxSize()
-        .background(NeonPurple)
-        .combinedClickable(
-            onClick = onClick,
-            onLongClick = onLongClick
-        ),
-        contentAlignment = Alignment.Center
-    ){
-        Image(
-            painter = painterResource(id = iconId),
-            modifier = Modifier.size(30.dp),
-            contentDescription = "SquareButtonIcon",
-            colorFilter = ColorFilter.tint(BlackBack)
-        )
     }
 }
 

@@ -14,16 +14,22 @@ class ChatViewModel(val messageDao: MessageDao): ViewModel() {
 
     private val _messageInput = MutableStateFlow("")
     val messageInput = _messageInput.asStateFlow()
-    private val messageSplit = true
+    private val _messageSplit = MutableStateFlow(true)
+    val messageSplit = _messageSplit.asStateFlow()
+
     var currentChatName: String? = null
 
     fun getCurrentChat(): Flow<List<MessageEntity>> {
         return messageDao.getMessages(currentChatName!!)
     }
 
+    fun onMessageSplitSwitch(){
+        _messageSplit.value = !_messageSplit.value
+    }
+
     fun onMessageChanged(rootViewModel: RootViewModel, newText: String){
         _messageInput.value = newText
-        if(messageSplit) {
+        if(_messageSplit.value) {
             sendMessageToChannel(rootViewModel, false)
         }
     }
