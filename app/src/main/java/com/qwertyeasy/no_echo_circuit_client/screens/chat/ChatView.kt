@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,8 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.qwertyeasy.no_echo_circuit_client.R
+import com.qwertyeasy.no_echo_circuit_client.components.ExtendingTextField
 import com.qwertyeasy.no_echo_circuit_client.components.HorizontalLine
-import com.qwertyeasy.no_echo_circuit_client.components.MultiLineTextField
 import com.qwertyeasy.no_echo_circuit_client.components.SquareButton
 import com.qwertyeasy.no_echo_circuit_client.screens.root.RootViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
@@ -43,8 +45,8 @@ fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
             Spacer(Modifier.weight(0.03f))
             ChatTitle(Modifier.weight(0.08f), chatViewModel)
             ChatBlock(Modifier.weight(0.9f), chatViewModel, rootViewModel)
-            BottomInputField(Modifier.weight(0.08f), chatViewModel, rootViewModel)
-            Spacer(Modifier.weight(0.03f))
+            BottomInputField(chatViewModel, rootViewModel)
+            Spacer(Modifier.height(30.dp))
         }
     }
 }
@@ -77,23 +79,21 @@ fun ChatBackground(){
 }
 
 @Composable
-fun BottomInputField(
-    modifier: Modifier, chatViewModel: ChatViewModel, rootViewModel: RootViewModel
+fun BottomInputField(chatViewModel: ChatViewModel, rootViewModel: RootViewModel
 ){
     val messageInput by chatViewModel.messageInput.collectAsState()
 
-    Column(modifier = modifier) {
+    Column() {
         HorizontalLine(BlackBack)
         HorizontalLine(NeonPurple)
-        Row {
-            SquareButton(Modifier.weight(0.12f), R.drawable.clip, NeonPurple,
+        Row(verticalAlignment = Alignment.Bottom) {
+            SquareButton(Modifier.size(50.dp), R.drawable.clip, NeonPurple,
                 BlackBack, 30.dp,{ chatViewModel.onClipClicked() }, {})
             Box(Modifier.weight(0.8f)) {
-                MultiLineTextField(
-                    messageInput, BlackBack, NeonPurple,
+                ExtendingTextField(messageInput, BlackBack, NeonPurple,
                     { chatViewModel.onMessageChanged(rootViewModel, it) })
             }
-            SquareButton(Modifier.weight(0.12f), R.drawable.arrow, NeonPurple,
+            SquareButton(Modifier.size(50.dp), R.drawable.arrow, NeonPurple,
                 BlackBack, 30.dp, { chatViewModel.onSendClicked(rootViewModel) },
                 { chatViewModel.onSendPressed() })
         }
