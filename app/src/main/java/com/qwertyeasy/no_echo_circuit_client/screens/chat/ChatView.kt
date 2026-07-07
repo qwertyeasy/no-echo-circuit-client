@@ -129,6 +129,6 @@ fun MessageField(isMain: Boolean, data: String){
             .background(boxColor, shape = RoundedCornerShape(20.dp))
             .padding(10.dp),
     ) {
-        Text(text = data, color = textColor, fontSize = 20.sp, textAlign = TextAlign.Start)
+        Text(text = data, color = textColor, fontSize = 16.sp, textAlign = TextAlign.Start)
     }
 }
