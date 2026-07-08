@@ -82,6 +82,7 @@ class WebRtcClient private constructor() {
             PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
             PeerConnection.IceServer.builder("stun:stun.cloudflare.com:3478").createIceServer(),
             PeerConnection.IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
+            PeerConnection.IceServer.builder("stun:stun.nextcloud.com:3478").createIceServer(),
             // PeerConnection.IceServer.builder("turn:твой-ip:3478").createIceServer()
         )
     }
@@ -103,12 +104,15 @@ class WebRtcClient private constructor() {
             bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE
             rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE
             iceTransportsType = PeerConnection.IceTransportsType.ALL
+
+            iceCheckIntervalStrongConnectivityMs = 3000
+            iceCheckIntervalWeakConnectivityMs = 5000
+            iceCheckMinInterval
         }
         val observer = object : ConnectionObserver() {
             override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
                 println("Статус IceConnection изменился: $p0")
-                if(p0 == PeerConnection.IceConnectionState.DISCONNECTED ||
-                   p0 == PeerConnection.IceConnectionState.CLOSED ||
+                if(p0 == PeerConnection.IceConnectionState.CLOSED ||
                    p0 == PeerConnection.IceConnectionState.FAILED
                 ){
                     connectionResourceDisposal(nickname)
@@ -117,7 +121,15 @@ class WebRtcClient private constructor() {
             }
             override fun onIceCandidate(candidate: IceCandidate?) {
                 candidate?.let{
-                    println("Собран iceCandidate: sdp - ${candidate.sdp}")
+                    val type = if(candidate.sdp.contains("typ srflx")) {"SRFLX"}
+                    else if(candidate.sdp.contains("typ prflx")) {"PRFLX"}
+                    else if(candidate.sdp.contains("typ relay")) {"RELAY"}
+                    else if(candidate.sdp.contains("192.168")){"WIFI HOST"}
+                    else {"HOST"}
+
+                    if(type != "HOST") {
+                        println("Собран $type iceCandidate")
+                    }
                     onIceCands(candidate)
                 }
             }
@@ -126,7 +138,7 @@ class WebRtcClient private constructor() {
             }
         }
 
-        //TODO: Возможно у получателя соединениня создается пустой DataChannel
+        //TODO: Возможно у получателя соединения создается пустой DataChannel
         val peerConnection = peerFactory.createPeerConnection(rtcConfig, observer)
         peerConnection?.let {
             peerConnectionMapByUser[nickname] = peerConnection

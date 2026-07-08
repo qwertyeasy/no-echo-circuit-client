@@ -143,8 +143,7 @@ class RootViewModel: ViewModel() {
             SessionDescription.Type.OFFER, answerRequest.sdp
         )
 
-        println("Получен запрос о соединении от пользователя ${answerRequest.from}: " +
-                "прислали $requestSdp")
+        println("Получен запрос о соединении от пользователя ${answerRequest.from}")
 
         val pc = webRtcClient.createPeerConnection(answerRequest.from,
             { addConnectionView(it) },
@@ -178,7 +177,7 @@ class RootViewModel: ViewModel() {
         val responseSdp = SessionDescription(
             SessionDescription.Type.ANSWER, sdpMessage.sdp
         )
-        println("Получен ответ от пользователя ${sdpMessage.from}: $responseSdp")
+        println("Получен ответ от пользователя ${sdpMessage.from}")
 
         webRtcClient.setRemoteSdpByNickname(sdpMessage.from, responseSdp)
     }
@@ -255,15 +254,21 @@ class RootViewModel: ViewModel() {
         val candidate = IceCandidate(
             msg.ice.sdpMid, msg.ice.sdpMLineIndex, msg.ice.candidate
         )
-        println("Получен iceCandidate от пользователя ${msg.from}: sdp - ${candidate.sdp}")
+        val type = if(candidate.sdp.contains("typ srflx")) {"SRFLX"}
+              else if(candidate.sdp.contains("typ prflx")) {"PRFLX"}
+              else if(candidate.sdp.contains("typ relay")) {"RELAY"}
+              else if(candidate.sdp.contains("192.168")){"WIFI HOST"}
+        else {"HOST"}
 
+        if(type != "HOST") {
+            println("Получен $type iceCandidate от пользователя ${msg.from}")
+        }
         webRtcClient.addIceCandidate(msg.from, candidate)
     }
 
     private fun handleServerMessage(){
         viewModelScope.launch {
             networkService.responses.collect { msg ->
-                // TODO: обработать множество сообщений
                 when(msg.type){
                     ResponseType.SERVER_CONNECT -> println("Success connection with server")
                     ResponseType.SUCCESS_LOGIN -> onSuccessLogin()

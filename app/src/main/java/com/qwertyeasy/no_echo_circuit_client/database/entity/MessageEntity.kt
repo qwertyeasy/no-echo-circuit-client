@@ -20,5 +20,5 @@ data class MessageEntity(
 
     var isCompleted: Boolean,
 
-    val timestamp: Long = System.currentTimeMillis()
+    var timestamp: Long = System.currentTimeMillis()
 )
