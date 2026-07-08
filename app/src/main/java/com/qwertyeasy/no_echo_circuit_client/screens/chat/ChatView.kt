@@ -32,6 +32,7 @@ import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
+import com.qwertyeasy.no_echo_circuit_client.ui.theme.PixelCyr
 
 @Composable
 fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
@@ -129,6 +130,8 @@ fun MessageField(isMain: Boolean, data: String){
             .background(boxColor, shape = RoundedCornerShape(20.dp))
             .padding(10.dp),
     ) {
-        Text(text = data, color = textColor, fontSize = 16.sp, textAlign = TextAlign.Start)
+        Text(text = data, color = textColor, fontSize = 16.sp,
+             fontFamily = PixelCyr, textAlign = TextAlign.Start
+        )
     }
 }
