@@ -105,9 +105,8 @@ class WebRtcClient private constructor() {
             rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE
             iceTransportsType = PeerConnection.IceTransportsType.ALL
 
-            iceCheckIntervalStrongConnectivityMs = 3000
-            iceCheckIntervalWeakConnectivityMs = 5000
-            iceCheckMinInterval
+            iceConnectionReceivingTimeout = 30
+            iceCandidatePoolSize = 1
         }
         val observer = object : ConnectionObserver() {
             override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
