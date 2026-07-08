@@ -20,6 +20,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -114,14 +116,14 @@ fun ChatBlock(modifier: Modifier, chatViewModel: ChatViewModel, rootViewModel: R
             Box(modifier = Modifier.fillMaxWidth(),
                 contentAlignment = alignment
             ) {
-                MessageField(isMain, item.data)
+                MessageField(isMain, item.isCompleted, item.data)
             }
         }
     }
 }
 
 @Composable
-fun MessageField(isMain: Boolean, data: String){
+fun MessageField(isMain: Boolean, isCompleted: Boolean, data: String){
     val boxColor = if (isMain) NeonPurple else BlackBack
     val textColor = if (isMain) BlackBack else NeonPurple
 
@@ -130,8 +132,21 @@ fun MessageField(isMain: Boolean, data: String){
             .background(boxColor, shape = RoundedCornerShape(20.dp))
             .padding(10.dp),
     ) {
-        Text(text = data, color = textColor, fontSize = 16.sp,
-             fontFamily = PixelCyr, textAlign = TextAlign.Start
-        )
+        //TODO: проверить, корректно ли отображается
+        if(isMain || isCompleted) {
+            Text(text = data, color = textColor, fontSize = 16.sp,
+                 fontFamily = PixelCyr, textAlign = TextAlign.Start)
+        } else {
+            Text(text = buildAnnotatedString {
+                append(data)
+                addStyle(
+                    style = SpanStyle(background = NeonPurple),
+                    start = data.length-1,
+                    end = data.length
+                ) },
+                color = textColor, fontSize = 16.sp,
+                fontFamily = PixelCyr, textAlign = TextAlign.Start
+            )
+        }
     }
 }
