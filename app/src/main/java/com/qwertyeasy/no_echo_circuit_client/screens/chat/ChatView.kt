@@ -132,7 +132,6 @@ fun MessageField(isMain: Boolean, isCompleted: Boolean, data: String){
             .background(boxColor, shape = RoundedCornerShape(20.dp))
             .padding(10.dp),
     ) {
-        //TODO: проверить, корректно ли отображается
         if(isMain || isCompleted) {
             Text(text = data, color = textColor, fontSize = 16.sp,
                  fontFamily = PixelCyr, textAlign = TextAlign.Start)
@@ -140,7 +139,7 @@ fun MessageField(isMain: Boolean, isCompleted: Boolean, data: String){
             Text(text = buildAnnotatedString {
                 append(data)
                 addStyle(
-                    style = SpanStyle(background = NeonPurple),
+                    style = SpanStyle(background = NeonPurple, color = BlackBack),
                     start = data.length-1,
                     end = data.length
                 ) },
