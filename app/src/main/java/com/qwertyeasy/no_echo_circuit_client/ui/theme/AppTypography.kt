@@ -13,6 +13,10 @@ val TronicaFont = FontFamily(
     Font(R.font.tronica)
 )
 
+val PixelCyr = FontFamily(
+    Font(R.font.pixelcyr)
+)
+
 val InterBlack = FontFamily(
     Font(R.font.inter)
 )

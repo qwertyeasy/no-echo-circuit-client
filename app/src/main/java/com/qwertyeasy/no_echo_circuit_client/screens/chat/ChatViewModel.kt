@@ -14,18 +14,31 @@ class ChatViewModel(val messageDao: MessageDao): ViewModel() {
 
     private val _messageInput = MutableStateFlow("")
     val messageInput = _messageInput.asStateFlow()
-    private val messageSplit = true
+    private val _messageSplit = MutableStateFlow(true)
+    val messageSplit = _messageSplit.asStateFlow()
+
     var currentChatName: String? = null
 
     fun getCurrentChat(): Flow<List<MessageEntity>> {
         return messageDao.getMessages(currentChatName!!)
     }
 
+    fun onMessageSplitSwitch(){
+        _messageSplit.value = !_messageSplit.value
+    }
+
     fun onMessageChanged(rootViewModel: RootViewModel, newText: String){
-        _messageInput.value = newText
-        if(messageSplit) {
-            sendMessageToChannel(rootViewModel, false)
+        if(isValidMessageChange(newText)) {
+            _messageInput.value = newText
+            if (_messageSplit.value) {
+                sendMessageToChannel(rootViewModel, false)
+            }
         }
+    }
+
+    fun isValidMessageChange(newText: String): Boolean{
+        return _messageInput.value.isNotEmpty() ||
+              (_messageInput.value.isEmpty() && newText.isNotBlank())
     }
 
     fun onMessageReceived(messageEntity: MessageEntity){
@@ -64,11 +77,17 @@ class ChatViewModel(val messageDao: MessageDao): ViewModel() {
     }
 
     fun onSendClicked(rootViewModel: RootViewModel){
-        println("Отправка сообщения: ${_messageInput.value}")
+        if(isMessageValid()) {
+            println("Отправка сообщения: ${_messageInput.value}")
 
-        val chatMessage = sendMessageToChannel(rootViewModel, true)
-        saveMessageToDatabase(chatMessage)
-        _messageInput.value = ""
+            val chatMessage = sendMessageToChannel(rootViewModel, true)
+            saveMessageToDatabase(chatMessage)
+            _messageInput.value = ""
+        }
+    }
+
+    fun isMessageValid(): Boolean{
+        return _messageInput.value.isNotEmpty()
     }
 
     fun onSendPressed(){
