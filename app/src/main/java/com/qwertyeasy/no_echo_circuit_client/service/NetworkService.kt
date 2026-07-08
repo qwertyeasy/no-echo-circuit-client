@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import java.net.ConnectException
 
 class NetworkService (
     private val appScope: CoroutineScope,
@@ -27,7 +26,7 @@ class NetworkService (
     //может стоит все таки вынести адрес выше в RootViewModel?
 //    private val serverUrl: String = "ws://10.0.2.2:8888/signal"
     private val serverUrl: String = "ws://192.168.1.109:8888/signal"
-//    private val serveoTunnel = "quinto.serveousercontent.com"
+//    private val serveoTunnel = "unguibus.serveousercontent.com"
 //    private val serverUrl: String = "wss://$serveoTunnel/signal"
     private val _responses = MutableSharedFlow<ResponseMessage>()
     val responses = _responses.asSharedFlow()
@@ -48,7 +47,7 @@ class NetworkService (
                         _responses.emit(response)
                     }
                 }
-            } catch (_: ConnectException) {
+            } catch (_: Exception) {
                 onWsConnectFail()
             }
         }

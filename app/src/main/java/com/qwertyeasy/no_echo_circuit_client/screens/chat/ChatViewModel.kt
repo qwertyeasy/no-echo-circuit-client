@@ -36,6 +36,7 @@ class ChatViewModel(val messageDao: MessageDao): ViewModel() {
             if(notCompleted != null){
                 notCompleted.data = messageEntity.data
                 notCompleted.isCompleted = messageEntity.isCompleted
+                notCompleted.timestamp = messageEntity.timestamp
                 messageDao.updateMessage(notCompleted)
             } else {
                 messageDao.insertMessage(messageEntity)
