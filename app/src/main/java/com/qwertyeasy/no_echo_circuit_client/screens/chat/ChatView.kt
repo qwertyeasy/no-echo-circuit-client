@@ -1,6 +1,7 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +38,9 @@ import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.PixelCyr
 
 @Composable
-fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
+fun ChatScreen(
+    chatViewModel: ChatViewModel, rootViewModel: RootViewModel, onTitleClick: () -> Unit
+){
     Box(modifier = Modifier
         .fillMaxSize()
         .background(BlackBack),
@@ -46,7 +49,7 @@ fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
         ChatBackground()
         Column() {
             Spacer(Modifier.weight(0.03f))
-            ChatTitle(Modifier.weight(0.08f), chatViewModel)
+            ChatTitle(Modifier.weight(0.08f), chatViewModel, onTitleClick)
             ChatBlock(Modifier.weight(0.9f), chatViewModel, rootViewModel)
             BottomInputField(chatViewModel, rootViewModel)
             Spacer(Modifier.height(30.dp))
@@ -55,7 +58,7 @@ fun ChatScreen(chatViewModel: ChatViewModel, rootViewModel: RootViewModel){
 }
 
 @Composable
-fun ChatTitle(modifier: Modifier, chatViewModel: ChatViewModel){
+fun ChatTitle(modifier: Modifier, chatViewModel: ChatViewModel, onTitleClick: () -> Unit){
     val chatTitle = chatViewModel.currentChatName!!
     val messageSplit by chatViewModel.messageSplit.collectAsState()
     val splitIcon = if(messageSplit) R.drawable.add_ok else R.drawable.add_fail
@@ -64,7 +67,7 @@ fun ChatTitle(modifier: Modifier, chatViewModel: ChatViewModel){
         modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
     ){
         Spacer(Modifier.weight(0.1f))
-        Box(Modifier.weight(0.9f)) {
+        Box(Modifier.weight(0.9f).clickable(onClick = onTitleClick)) {
             Text(chatTitle, color = NeonPurple, fontFamily = InterBlack, fontSize = 30.sp)
         }
         SquareButton(Modifier.weight(0.1f), splitIcon, Color.Transparent,

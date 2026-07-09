@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.qwertyeasy.no_echo_circuit_client.database.DatabaseProvider
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
+import com.qwertyeasy.no_echo_circuit_client.screens.chat_management.ChatManagementScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.login.LoginScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.onlinelist.OnlineListScreen
 import com.qwertyeasy.no_echo_circuit_client.screens.root.popup.FailedToConnectPopup
@@ -52,7 +53,14 @@ fun RootView(){
                 }
             }
             composable(Screens.CHAT){
-                ChatScreen(chatViewModel, rootViewModel)
+                ChatScreen(chatViewModel, rootViewModel){
+                    navController.navigate(Screens.CHAT_MANAGEMENT){
+                        popUpTo(Screens.CHAT) { inclusive = false }
+                    }
+                }
+            }
+            composable(Screens.CHAT_MANAGEMENT){
+                ChatManagementScreen(chatViewModel)
             }
         }
     }

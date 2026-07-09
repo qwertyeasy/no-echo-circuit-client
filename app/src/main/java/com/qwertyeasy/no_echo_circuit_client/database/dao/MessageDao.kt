@@ -18,15 +18,13 @@ interface MessageDao {
     """)
     fun getMessages(chatName: String): Flow<List<MessageEntity>>
 
-    @Query(
-        """
+    @Query("""
         SELECT * FROM messages
         WHERE fromUser = :chatName
         AND isCompleted = 0
         ORDER BY timestamp DESC
         LIMIT 1
-    """
-    )
+    """)
     suspend fun findNotCompletedMessage(chatName: String): MessageEntity?
 
     @Insert
@@ -34,4 +32,19 @@ interface MessageDao {
 
     @Update
     suspend fun updateMessage(message: MessageEntity)
+
+    @Query("""
+        DELETE FROM messages
+        WHERE fromUser = :chatName
+        OR toUser = :chatName
+    """)
+    suspend fun clearChat(chatName: String)
+
+    @Query("""
+        SELECT COUNT(*)
+        FROM messages
+        WHERE fromUser = :chatName
+        OR toUser = :chatName
+    """)
+    suspend fun getChatVolume(chatName: String): Long
 }

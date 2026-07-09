@@ -4,4 +4,5 @@ object Screens {
     const val LOGIN = "login"
     const val ONLINE_LIST = "online_list"
     const val CHAT = "chat"
+    const val CHAT_MANAGEMENT = "chat_management"
 }
