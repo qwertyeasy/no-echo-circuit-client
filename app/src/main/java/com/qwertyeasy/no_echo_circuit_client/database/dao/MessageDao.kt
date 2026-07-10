@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.qwertyeasy.no_echo_circuit_client.database.dto.DayMessagesCount
 import com.qwertyeasy.no_echo_circuit_client.database.entity.MessageEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -47,4 +48,13 @@ interface MessageDao {
         OR toUser = :chatName
     """)
     suspend fun getChatVolume(chatName: String): Long
+
+    @Query("""
+        SELECT (timestamp / 86400000 * 86400000) AS date, COUNT(*) AS count
+        FROM messages
+        WHERE fromUser = :chatName
+        OR toUser = :chatName
+        GROUP BY(timestamp / 86400000 * 86400000)
+    """)
+    suspend fun countDayMessages(chatName: String): List<DayMessagesCount>
 }

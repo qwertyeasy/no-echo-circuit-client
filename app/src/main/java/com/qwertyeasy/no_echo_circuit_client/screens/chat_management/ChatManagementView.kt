@@ -5,18 +5,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.qwertyeasy.no_echo_circuit_client.components.TitleButton
+import com.qwertyeasy.no_echo_circuit_client.components.SmallPixelTextButton
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
+import java.time.LocalDate
 
 @Composable
 fun ChatManagementScreen(chatViewModel: ChatViewModel){
@@ -28,21 +32,16 @@ fun ChatManagementScreen(chatViewModel: ChatViewModel){
         Column(Modifier.weight(0.9f)) {
             Spacer(Modifier.weight(0.2f))
             LazyColumn(Modifier.weight(0.7f)) { item {
-                    ChatManagementTable(chatManagementViewModel)
+                StatisticsBlock(chatManagementViewModel)
             } }
-            Spacer(Modifier.weight(0.1f))
+            SmallPixelTextButton("> drop chat", Modifier.height(80.dp),
+                BlackBack, NeonPurple,
+                { chatManagementViewModel.cleanCurrentChat() }
+            )
+            Spacer(Modifier.height(140.dp))
         }
         Spacer(Modifier.weight(0.05f))
     }
-}
-
-@Composable
-fun ChatManagementTable(chatManagementViewModel: ChatManagementViewModel){
-    StatisticsBlock(chatManagementViewModel)
-    TitleButton("DROP CHAT", Modifier,
-        BlackBack, NeonPurple,
-        { chatManagementViewModel.cleanCurrentChat() }
-    )
 }
 
 @Composable
@@ -54,7 +53,14 @@ fun StatisticsBlock(chatManagementViewModel: ChatManagementViewModel){
         "${chatVolume / 1000.00} k"
     }
     Column {
-        Text(text = "Messages count:", color = NeonPurple)
-        Text(text = normalized, color = NeonPurple, fontFamily = InterBlack)
+        Text(text = "Messages count:", color = NeonPurple, fontSize = 25.sp)
+        Text(text = normalized, color = NeonPurple, fontFamily = InterBlack, fontSize = 60.sp)
+        MonthVisualisation(chatManagementViewModel)
     }
+}
+
+@Composable
+fun MonthVisualisation(chatManagementViewModel: ChatManagementViewModel){
+    chatManagementViewModel.getDayCount()
+    val dayList by chatManagementViewModel.chatDayCount.collectAsState()
 }
