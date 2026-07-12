@@ -47,7 +47,7 @@ interface MessageDao {
         WHERE fromUser = :chatName
         OR toUser = :chatName
     """)
-    suspend fun getChatVolume(chatName: String): Long
+    fun getChatVolume(chatName: String): Flow<Long>
 
     @Query("""
         SELECT (timestamp / 86400000 * 86400000) AS date, COUNT(*) AS count
@@ -56,5 +56,5 @@ interface MessageDao {
         OR toUser = :chatName
         GROUP BY(timestamp / 86400000 * 86400000)
     """)
-    suspend fun countDayMessages(chatName: String): List<DayMessagesCount>
+    fun countDayMessages(chatName: String): Flow<List<DayMessagesCount>>
 }

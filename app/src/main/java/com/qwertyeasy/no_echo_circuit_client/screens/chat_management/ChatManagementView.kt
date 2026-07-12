@@ -1,16 +1,20 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.chat_management
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,8 +23,8 @@ import com.qwertyeasy.no_echo_circuit_client.components.SmallPixelTextButton
 import com.qwertyeasy.no_echo_circuit_client.screens.chat.ChatViewModel
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
+import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
-import java.time.LocalDate
 
 @Composable
 fun ChatManagementScreen(chatViewModel: ChatViewModel){
@@ -46,7 +50,7 @@ fun ChatManagementScreen(chatViewModel: ChatViewModel){
 
 @Composable
 fun StatisticsBlock(chatManagementViewModel: ChatManagementViewModel){
-    val chatVolume by chatManagementViewModel.chatVolume.collectAsState()
+    val chatVolume by chatManagementViewModel.countChatVolume().collectAsState(0L)
     val normalized = if(chatVolume < 1000) {
         chatVolume.toString()
     } else {
@@ -55,12 +59,72 @@ fun StatisticsBlock(chatManagementViewModel: ChatManagementViewModel){
     Column {
         Text(text = "Messages count:", color = NeonPurple, fontSize = 25.sp)
         Text(text = normalized, color = NeonPurple, fontFamily = InterBlack, fontSize = 60.sp)
-        MonthVisualisation(chatManagementViewModel)
+        DatesVisualisation(chatManagementViewModel)
     }
 }
 
 @Composable
-fun MonthVisualisation(chatManagementViewModel: ChatManagementViewModel){
-    chatManagementViewModel.getDayCount()
-    val dayList by chatManagementViewModel.chatDayCount.collectAsState()
+fun DatesVisualisation(chatManagementViewModel: ChatManagementViewModel){
+    val dayList by chatManagementViewModel.getDayCount().collectAsState(emptyList())
+    var vertOffset = 0
+    var horiOffset = 0
+
+    val daysIterator = dayList.reversed().iterator()
+    LazyRow { item {
+        Column {
+            while (daysIterator.hasNext()) {
+                val next = daysIterator.next()
+                println("Текущий день: ${next.date.dayOfWeek}, соответствует - ${next.date.dayOfWeek.value}")
+                while ((vertOffset + 1) < next.date.dayOfWeek.value) {
+                    println("Недельное смещение: $vertOffset, текущий день: ${next.date.dayOfWeek}")
+                    println("Рисуем пустое")
+                    EmptyDayPoint(vertOffset, horiOffset)
+                    vertOffset++
+                }
+                println("Недельное смещение: $vertOffset, текущий день: ${next.date.dayOfWeek}")
+                println("Рисуем полное")
+                FilledDayPoint(vertOffset, horiOffset, next.count)
+                vertOffset++
+                if (vertOffset == 7) {
+                    vertOffset = 0
+                    horiOffset++
+                    break
+                }
+            }
+        }}
+        //TODO: Нужно настроить проверку того, что последнее в очереди равно текущей дате.
+        // Иначе дорисовываем пустые точки.
+    }
+}
+
+//TODO: настроить кнопки на точках, которые будут отображать дневное количество
+//TODO: Разобраться, оффсеты похоже и не нужны????
+@Composable
+fun FilledDayPoint(vertOffset: Int, horiOffset: Int, count: Long){
+    val alpha = when{
+        //TODO: настроить продуктовые значения, пока тестовые.
+//        count >= 300L -> 1f
+//        count >= 200L -> 0.8f
+//        count >= 150L -> 0.6f
+//        count >= 100L -> 0.4f
+        count >= 30L -> 1f
+        count >= 20L -> 0.8f
+        count >= 15L -> 0.6f
+        count >= 10L -> 0.4f
+        else -> 0.2f
+    }
+    Box(Modifier.size(30.dp), contentAlignment = Alignment.Center){
+        Box(Modifier.size(28.dp)
+            .background(NeonPurple.copy(alpha = alpha))
+        )
+    }
+}
+
+@Composable
+fun EmptyDayPoint(vertOffset: Int, horiOffset: Int){
+    Box(Modifier.size(30.dp), contentAlignment = Alignment.Center){
+        Box(Modifier.size(4.dp)
+            .background(LightGrey.copy(alpha = 0.3f))
+        )
+    }
 }
