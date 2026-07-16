@@ -1,6 +1,7 @@
 package com.qwertyeasy.no_echo_circuit_client.screens.chat_management
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,6 +29,8 @@ import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.LocalDate
 
 @Composable
 fun ChatManagementScreen(chatViewModel: ChatViewModel){
@@ -69,6 +75,9 @@ fun DatesVisualisation(chatManagementViewModel: ChatManagementViewModel){
     var vertOffset = 0
     var horiOffset = 0
 
+    // TODO: перенести в viewmodel
+    var pointDateAndCount by remember { mutableStateOf("") }
+
     val daysIterator = dayList.reversed().iterator()
     LazyRow { item {
         Column {
@@ -83,7 +92,8 @@ fun DatesVisualisation(chatManagementViewModel: ChatManagementViewModel){
                 }
                 println("Недельное смещение: $vertOffset, текущий день: ${next.date.dayOfWeek}")
                 println("Рисуем полное")
-                FilledDayPoint(vertOffset, horiOffset, next.count)
+                FilledDayPoint(vertOffset, horiOffset, next.count,
+                    { pointDateAndCount = "${next.date} - ${next.count}" })
                 vertOffset++
                 if (vertOffset == 7) {
                     vertOffset = 0
@@ -95,12 +105,16 @@ fun DatesVisualisation(chatManagementViewModel: ChatManagementViewModel){
         //TODO: Нужно настроить проверку того, что последнее в очереди равно текущей дате.
         // Иначе дорисовываем пустые точки.
     }
+    if(pointDateAndCount.isNotBlank()){
+        Spacer(Modifier.height(24.dp))
+        Text(text = pointDateAndCount, color = NeonPurple, fontSize = 25.sp)
+    }
 }
 
 //TODO: настроить кнопки на точках, которые будут отображать дневное количество
 //TODO: Разобраться, оффсеты похоже и не нужны????
 @Composable
-fun FilledDayPoint(vertOffset: Int, horiOffset: Int, count: Long){
+fun FilledDayPoint(vertOffset: Int, horiOffset: Int, count: Long, onPointClick: () -> Unit){
     val alpha = when{
         //TODO: настроить продуктовые значения, пока тестовые.
 //        count >= 300L -> 1f
@@ -115,6 +129,7 @@ fun FilledDayPoint(vertOffset: Int, horiOffset: Int, count: Long){
     }
     Box(Modifier.size(30.dp), contentAlignment = Alignment.Center){
         Box(Modifier.size(28.dp)
+            .clickable(onClick = onPointClick)
             .background(NeonPurple.copy(alpha = alpha))
         )
     }

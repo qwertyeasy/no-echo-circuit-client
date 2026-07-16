@@ -36,22 +36,22 @@ fun RootView(){
         RootPopups(rootViewModel)
         NavHost(
             navController = navController,
-            startDestination = Screens.LOGIN
+            startDestination = Screens.CHAT
         ) {
-            composable(Screens.LOGIN) {
-                LoginScreen(rootViewModel) {
-                    navController.navigate(Screens.ONLINE_LIST) {
-                        popUpTo(Screens.LOGIN) { inclusive = true }
-                    }
-                }
-            }
-            composable(Screens.ONLINE_LIST) {
-                OnlineListScreen(rootViewModel){
-                    navController.navigate(Screens.CHAT){
-                        popUpTo(Screens.ONLINE_LIST) { inclusive = false }
-                    }
-                }
-            }
+//            composable(Screens.LOGIN) {
+//                LoginScreen(rootViewModel) {
+//                    navController.navigate(Screens.ONLINE_LIST) {
+//                        popUpTo(Screens.LOGIN) { inclusive = true }
+//                    }
+//                }
+//            }
+//            composable(Screens.ONLINE_LIST) {
+//                OnlineListScreen(rootViewModel){
+//                    navController.navigate(Screens.CHAT){
+//                        popUpTo(Screens.ONLINE_LIST) { inclusive = false }
+//                    }
+//                }
+//            }
             composable(Screens.CHAT){
                 ChatScreen(chatViewModel, rootViewModel){
                     navController.navigate(Screens.CHAT_MANAGEMENT){

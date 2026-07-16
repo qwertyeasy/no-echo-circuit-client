@@ -17,7 +17,8 @@ class ChatViewModel(val messageDao: MessageDao): ViewModel() {
     private val _messageSplit = MutableStateFlow(true)
     val messageSplit = _messageSplit.asStateFlow()
 
-    var currentChatName: String? = null
+//    var currentChatName: String? = null
+    var currentChatName: String = "aigul"
 
     fun getCurrentChat(): Flow<List<MessageEntity>> {
         return messageDao.getMessages(currentChatName!!)

@@ -40,7 +40,8 @@ class RootViewModel: ViewModel() {
     val isLogin = _isLogin.asStateFlow()
     private val webRtcClient = WebRtcClient.instance
     private var chatViewModel: ChatViewModel? = null
-    private var myName: String? = null
+//    private var myName: String? = null
+    private var myName: String = "qwe"
 
     init {
         handleServerMessage()
