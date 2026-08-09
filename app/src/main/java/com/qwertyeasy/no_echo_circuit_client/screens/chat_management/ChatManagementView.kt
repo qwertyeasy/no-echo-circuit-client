@@ -6,18 +6,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,7 +28,6 @@ import com.qwertyeasy.no_echo_circuit_client.ui.theme.BlackBack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.InterBlack
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.LightGrey
 import com.qwertyeasy.no_echo_circuit_client.ui.theme.NeonPurple
-import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.LocalDate
 
 @Composable
@@ -37,7 +35,9 @@ fun ChatManagementScreen(chatViewModel: ChatViewModel){
     val chatManagementViewModel: ChatManagementViewModel = viewModel(){
         ChatManagementViewModel(chatViewModel)
     }
-    Row(Modifier.fillMaxSize().background(BlackBack)) {
+    Row(Modifier
+        .fillMaxSize()
+        .background(BlackBack)) {
         Spacer(Modifier.weight(0.05f))
         Column(Modifier.weight(0.9f)) {
             Spacer(Modifier.weight(0.2f))
@@ -58,77 +58,94 @@ fun ChatManagementScreen(chatViewModel: ChatViewModel){
 fun StatisticsBlock(chatManagementViewModel: ChatManagementViewModel){
     val chatVolume by chatManagementViewModel.countChatVolume().collectAsState(0L)
     val normalized = if(chatVolume < 1000) {
-        chatVolume.toString()
+        "$chatVolume"
     } else {
         "${chatVolume / 1000.00} k"
     }
     Column {
         Text(text = "Messages count:", color = NeonPurple, fontSize = 25.sp)
         Text(text = normalized, color = NeonPurple, fontFamily = InterBlack, fontSize = 60.sp)
+        Spacer(Modifier.height(16.dp))
         DatesVisualisation(chatManagementViewModel)
     }
 }
 
 @Composable
-fun DatesVisualisation(chatManagementViewModel: ChatManagementViewModel){
+fun DatesVisualisation(chatManagementViewModel: ChatManagementViewModel) {
+    // TODO: Вернуть к исходному списку из БД
     val dayList by chatManagementViewModel.getDayCount().collectAsState(emptyList())
+//    val dayList = chatManagementViewModel.getTestList()
+    if(dayList.isEmpty()) { return }
+    val pointDateAndCount by chatManagementViewModel.pointDateAndCount.collectAsState()
+
     var vertOffset = 0
     var horiOffset = 0
+    val afterPointSet = { vertOffset++
+        if (vertOffset == 7){ vertOffset = 0; horiOffset++ }}
 
-    // TODO: перенести в viewmodel
-    var pointDateAndCount by remember { mutableStateOf("") }
+    val blockWidth = chatManagementViewModel.calcStatsBlockWidth(dayList)
+    val daysIterator = dayList.iterator()
+    var prevDay: LocalDate? = null
 
-    val daysIterator = dayList.reversed().iterator()
-    LazyRow { item {
-        Column {
+    LazyRow (reverseLayout = true) { item {
+        Box (Modifier.height((30*7).dp).width((30*blockWidth).dp)){
             while (daysIterator.hasNext()) {
+                // берем следующий элемент
                 val next = daysIterator.next()
-                println("Текущий день: ${next.date.dayOfWeek}, соответствует - ${next.date.dayOfWeek.value}")
-                while ((vertOffset + 1) < next.date.dayOfWeek.value) {
-                    println("Недельное смещение: $vertOffset, текущий день: ${next.date.dayOfWeek}")
-                    println("Рисуем пустое")
+                if(prevDay == null){
+                    prevDay = next.date.minusDays(
+                        next.date.dayOfWeek.value.toLong())
+                }
+                // отрисовка пустых дней до тех пор, пока не дойдем до следующего
+                while ((vertOffset + 1) != next.date.dayOfWeek.value
+                       || prevDay!!.plusDays(1).dayOfYear < next.date.dayOfYear
+                ){
                     EmptyDayPoint(vertOffset, horiOffset)
-                    vertOffset++
+                    afterPointSet()
+                    prevDay = prevDay?.plusDays(1)
                 }
-                println("Недельное смещение: $vertOffset, текущий день: ${next.date.dayOfWeek}")
-                println("Рисуем полное")
+                // отрисовка существующего дня
                 FilledDayPoint(vertOffset, horiOffset, next.count,
-                    { pointDateAndCount = "${next.date} - ${next.count}" })
+                { chatManagementViewModel.onPointClicked(
+                    "D:${next.date}  C:${next.count}") })
+                afterPointSet()
+                prevDay = next.date
+            }
+            // список закончился. отрисовка конца таблички до текущей даты
+            var pointDate = dayList.last().date
+            while (pointDate < LocalDate.now()) {
+                EmptyDayPoint(vertOffset, horiOffset)
+                pointDate = pointDate.plusDays(1)
+                afterPointSet()
+            }
+            //отрисовка от текущей даты до воскресенья
+            while(vertOffset < 7 && vertOffset != 0){
+                EmptyDayPoint(vertOffset, horiOffset)
                 vertOffset++
-                if (vertOffset == 7) {
-                    vertOffset = 0
-                    horiOffset++
-                    break
-                }
             }
         }}
-        //TODO: Нужно настроить проверку того, что последнее в очереди равно текущей дате.
-        // Иначе дорисовываем пустые точки.
     }
-    if(pointDateAndCount.isNotBlank()){
+    if (pointDateAndCount.isNotBlank()) {
         Spacer(Modifier.height(24.dp))
-        Text(text = pointDateAndCount, color = NeonPurple, fontSize = 25.sp)
+        Text(text = pointDateAndCount, color = NeonPurple, fontSize = 22.sp)
     }
 }
 
-//TODO: настроить кнопки на точках, которые будут отображать дневное количество
-//TODO: Разобраться, оффсеты похоже и не нужны????
 @Composable
 fun FilledDayPoint(vertOffset: Int, horiOffset: Int, count: Long, onPointClick: () -> Unit){
     val alpha = when{
-        //TODO: настроить продуктовые значения, пока тестовые.
-//        count >= 300L -> 1f
-//        count >= 200L -> 0.8f
-//        count >= 150L -> 0.6f
-//        count >= 100L -> 0.4f
-        count >= 30L -> 1f
-        count >= 20L -> 0.8f
-        count >= 15L -> 0.6f
-        count >= 10L -> 0.4f
+        count >= 200L -> 1f
+        count >= 150L -> 0.8f
+        count >= 100L -> 0.6f
+        count >= 50L -> 0.4f
         else -> 0.2f
     }
-    Box(Modifier.size(30.dp), contentAlignment = Alignment.Center){
-        Box(Modifier.size(28.dp)
+    Box(Modifier
+        .size(30.dp).absoluteOffset((horiOffset * 30).dp, (vertOffset*30).dp),
+        contentAlignment = Alignment.Center
+    ){
+        Box(Modifier
+            .size(26.dp)
             .clickable(onClick = onPointClick)
             .background(NeonPurple.copy(alpha = alpha))
         )
@@ -137,9 +154,10 @@ fun FilledDayPoint(vertOffset: Int, horiOffset: Int, count: Long, onPointClick: 
 
 @Composable
 fun EmptyDayPoint(vertOffset: Int, horiOffset: Int){
-    Box(Modifier.size(30.dp), contentAlignment = Alignment.Center){
-        Box(Modifier.size(4.dp)
-            .background(LightGrey.copy(alpha = 0.3f))
-        )
+    Box(Modifier
+        .size(30.dp).absoluteOffset((horiOffset * 30).dp, (vertOffset*30).dp),
+        contentAlignment = Alignment.Center
+    ){
+        Box(Modifier.size(4.dp).background(LightGrey.copy(alpha = 0.2f)))
     }
 }
